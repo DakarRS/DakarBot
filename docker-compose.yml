@@ -1,0 +1,32 @@
+services:
+  bot:
+    build: .
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      DAKARBOT_DATABASE_HOST: db
+      DAKARBOT_DATABASE_PORT: "5432"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: ${DAKARBOT_DATABASE_DATABASE:-dakarbot}
+      POSTGRES_USER: ${DAKARBOT_DATABASE_USER:-dakarbot}
+      POSTGRES_PASSWORD: ${DAKARBOT_DATABASE_PASSWORD:-changeme}
+    volumes:
+      - dakarbot-db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DAKARBOT_DATABASE_USER:-dakarbot}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  dakarbot-db:

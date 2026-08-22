@@ -1,0 +1,12 @@
+py-cord>=2.6.0
+python-dotenv>=1.0.0
+asyncpg>=0.29.0
+
+# Added as their respective cogs are ported:
+# aiohttp                    # generic async HTTP (already a py-cord dep, listed for clarity)
+# google-cloud-vision         # automod: safe-search / OCR
+# google-cloud-logging         # logging cog
+# google-api-python-client     # integrations: YouTube
+# rapidfuzz                    # integrations: YouTube search, automod: similar-message detection
+# dnspython                    # integrations: Zendesk help-center ownership verification
+# markdownify                  # integrations: Zendesk article HTML -> Markdown
