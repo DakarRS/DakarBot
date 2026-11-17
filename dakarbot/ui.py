@@ -26,10 +26,15 @@ Two things confirmed by inspecting pycord's own implementation before relying on
   and updates matching items in place instead of flattening/replacing the tree.
 """
 
+import logging
 from typing import Sequence
 
 import discord
 from discord.ui.view import _walk_all_components_v2
+
+from .error_reporting import describe_interaction, tell_user
+
+logger = logging.getLogger("dakarbot.ui")
 
 
 class LayoutView(discord.ui.BaseView):
@@ -46,6 +51,15 @@ class LayoutView(discord.ui.BaseView):
             existing = current.get(key)
             if existing is not None:
                 existing.refresh_component(component)
+
+    async def on_error(self, error: Exception, item: discord.ui.Item, interaction: discord.Interaction) -> None:
+        label = getattr(item, "label", None) or getattr(item, "custom_id", None) or type(item).__name__
+        await report_interaction_error(f"{type(self).__name__} button `{label}`", error, interaction)
+
+
+async def report_interaction_error(what: str, error: Exception, interaction: discord.Interaction) -> None:
+    logger.error("%s failed %s", what, describe_interaction(interaction), exc_info=error)
+    await tell_user(interaction, INTERACTION_FAILED)
 
 
 def format_list_or_inline(items: Sequence[str], threshold: int = 3) -> str:
@@ -94,3 +108,6 @@ class Icon:
     AUTO_RESPONSE = "💬"
     EXPORT = "📤"
     IMPORT = "📥"
+
+
+INTERACTION_FAILED = f"{Icon.ERROR} Something went wrong. The error has been reported."

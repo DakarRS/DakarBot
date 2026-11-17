@@ -24,6 +24,10 @@ OWNER_IDS = _split_ids(os.environ.get("DAKARBOT_OWNER_IDS"))
 # for local/dev testing. Leave unset in production.
 DEBUG_GUILD_IDS = _split_ids(os.environ.get("DAKARBOT_DEBUG_GUILD_IDS")) or None
 
+# Errors and warnings are posted here when set.
+_error_channel_raw = os.environ.get("DAKARBOT_ERROR_CHANNEL_ID")
+ERROR_CHANNEL_ID = int(_error_channel_raw) if _error_channel_raw else None
+
 DB_HOST = os.environ.get("DAKARBOT_DATABASE_HOST", "localhost")
 DB_PORT = int(os.environ.get("DAKARBOT_DATABASE_PORT", "5432"))
 DB_USER = os.environ.get("DAKARBOT_DATABASE_USER")

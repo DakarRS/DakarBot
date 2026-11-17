@@ -33,6 +33,7 @@ import discord
 from discord.ext import commands, tasks
 
 from ..bot import DakarBot, DakarCog
+from ..error_reporting import restart_crashed_loop
 from ..filtering import checks, models, tracking
 from ..filtering.models import AutoResponse, BadWord, parse_trigger
 from ..moderation.models import Punishment, PunishmentAction
@@ -184,6 +185,10 @@ class FilteringCog(DakarCog, name="Filtering"):
     @tasks.loop(seconds=5)
     async def _cleanup_cooldowns(self) -> None:
         tracking.cleanup_stale()
+
+    @_cleanup_cooldowns.error
+    async def _cleanup_cooldowns_error(self, error: BaseException) -> None:
+        restart_crashed_loop(self._cleanup_cooldowns, error)
 
     # ---- listeners ----
 

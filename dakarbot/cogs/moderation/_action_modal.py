@@ -8,6 +8,8 @@ from typing import TYPE_CHECKING, Optional, Union
 
 import discord
 
+from dakarbot.ui import report_interaction_error
+
 if TYPE_CHECKING:
     from .base import ModerationCog
 
@@ -33,6 +35,9 @@ class ActionModal(discord.ui.Modal):
     @property
     def comment(self) -> Optional[str]:
         return self.comment_input.value or None
+
+    async def on_error(self, error: Exception, interaction: discord.Interaction) -> None:
+        await report_interaction_error(f"{type(self).__name__} for {self.target}", error, interaction)
 
     def application_context(self, interaction: discord.Interaction) -> discord.ApplicationContext:
         return self.cog.bot.get_application_context(interaction)

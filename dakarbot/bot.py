@@ -11,6 +11,7 @@ from discord.ext import commands
 from . import settings
 from .channel_settings import ChannelSettings
 from .db import Database
+from .error_reporting import DiscordLogHandler, ErrorReporter
 from .guild_settings import GuildSettings
 
 logger = logging.getLogger("dakarbot")
@@ -93,6 +94,10 @@ class DakarBot(commands.AutoShardedBot):
         # gateway connect, which is the actual timing we need: cogs are loaded
         # synchronously in __init__ (above) and access self.db/self.guild_settings
         # lazily, only when a command executes, by which point this has long finished.
+        if settings.ERROR_CHANNEL_ID:
+            reporter = ErrorReporter(self, settings.ERROR_CHANNEL_ID)
+            reporter.start()
+            logging.getLogger().addHandler(DiscordLogHandler(reporter))
         self.db = await Database.connect()
         self.guild_settings = GuildSettings(self.db)
         self.channel_settings = ChannelSettings(self.db)
@@ -115,6 +120,10 @@ class DakarBot(commands.AutoShardedBot):
         if self.db is not None:
             await self.db.close()
         await super().close()
+
+    async def on_error(self, event_method: str, *args, **kwargs) -> None:
+        # pycord's default only prints; logging it gets it reported.
+        logger.exception("Unhandled error in event %s", event_method)
 
     async def on_ready(self) -> None:
         logger.info("Logged in as %s (%s)", self.user, self.user.id if self.user else "unknown")

@@ -17,6 +17,7 @@ import discord
 from discord.ext import tasks
 
 from ..bot import DakarBot, DakarCog
+from ..error_reporting import restart_crashed_loop
 from ..moderation import models
 from ..moderation.models import ModeratedMember, Moderation, ModerationAction
 
@@ -40,6 +41,10 @@ class IntervalsCog(DakarCog, name="Intervals"):
             expired = await models.get_expired_active(self.db, action, now_ts)
             for record in expired:
                 await self._expire_one(record)
+
+    @expire_moderations.error
+    async def expire_moderations_error(self, error: BaseException) -> None:
+        restart_crashed_loop(self.expire_moderations, error)
 
     @expire_moderations.before_loop
     async def before_expire_moderations(self) -> None:
