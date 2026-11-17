@@ -46,13 +46,13 @@ def build_duplicate_warning_container(
 ) -> discord.ui.Container:
     lines = [describe_case_line(m) for m in recent[:RECENT_MODERATIONS_SHOWN]]
     return discord.ui.Container(
-        discord.ui.TextDisplay("**Possible duplicate moderation**"),
+        discord.ui.TextDisplay("## ⚠️ Possible duplicate moderation"),
         discord.ui.TextDisplay(
             f"{target.mention} was recently moderated by someone else. Continue anyway?"
         ),
         discord.ui.Separator(),
         discord.ui.TextDisplay("\n\n".join(lines)),
-        color=discord.Color.orange(),
+        color=discord.Color.red(),
     )
 
 
@@ -73,10 +73,11 @@ class ConfirmationView(LayoutView):
 
         confirm_button = discord.ui.Button(
             label="Confirm",
+            emoji="✅",
             style=discord.ButtonStyle.danger if danger else discord.ButtonStyle.success,
         )
         confirm_button.callback = self._confirm
-        cancel_button = discord.ui.Button(label="Cancel", style=discord.ButtonStyle.secondary)
+        cancel_button = discord.ui.Button(label="Cancel", emoji="❌", style=discord.ButtonStyle.secondary)
         cancel_button.callback = self._cancel
 
         super().__init__(container, discord.ui.ActionRow(confirm_button, cancel_button), timeout=CONFIRMATION_DURATION)

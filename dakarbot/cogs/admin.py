@@ -19,7 +19,7 @@ from discord.ext import commands
 
 from .. import data_transfer
 from ..bot import DakarBot, DakarCog
-from ..ui import LayoutView
+from ..ui import Icon, LayoutView
 
 logger = logging.getLogger("dakarbot.admin")
 
@@ -43,10 +43,11 @@ class AdminCog(DakarCog, name="Admin"):
             filename += ".gz"
 
         if len(raw) > ctx.guild.filesize_limit:
-            await ctx.respond("Unable to upload exported data (file too large)!", ephemeral=True)
+            await ctx.respond(f"{Icon.ERROR} Unable to upload exported data (file too large)!", ephemeral=True)
             return
 
         await ctx.respond(
+            content=f"{Icon.EXPORT} Here's your exported data.",
             file=discord.File(io.BytesIO(raw), filename=filename),
             ephemeral=True,
         )
@@ -70,21 +71,24 @@ class AdminCog(DakarCog, name="Admin"):
                 raw = gzip.decompress(raw)
             except OSError:
                 await ctx.respond(
-                    "Failed to decompress gzip data. Make sure the file you're trying to upload is valid gzip.",
+                    f"{Icon.ERROR} Failed to decompress gzip data. Make sure the file you're trying to upload"
+                    " is valid gzip.",
                     ephemeral=True,
                 )
                 return
             filename = filename[:-3]
 
         if not filename.endswith(".json"):
-            await ctx.respond("Unknown file ending. Only .json and .json.gz files are supported.", ephemeral=True)
+            await ctx.respond(
+                f"{Icon.ERROR} Unknown file ending. Only .json and .json.gz files are supported.", ephemeral=True
+            )
             return
 
         try:
             parsed = json.loads(raw.decode("utf-8"))
         except (json.JSONDecodeError, UnicodeDecodeError):
             await ctx.respond(
-                "Failed to parse JSON data. Make sure the file you're trying to upload is valid JSON.",
+                f"{Icon.ERROR} Failed to parse JSON data. Make sure the file you're trying to upload is valid JSON.",
                 ephemeral=True,
             )
             return
@@ -92,7 +96,8 @@ class AdminCog(DakarCog, name="Admin"):
         fmt = data_transfer.detect_format(parsed)
         if fmt is None:
             await ctx.respond(
-                "Unknown data type. Only ModBot and Vortex data are currently supported.", ephemeral=True
+                f"{Icon.ERROR} Unknown data type. Only ModBot and Vortex data are currently supported.",
+                ephemeral=True,
             )
             return
 
@@ -103,12 +108,16 @@ class AdminCog(DakarCog, name="Admin"):
                 result = await data_transfer.import_vortex_data(self.bot, ctx.guild, parsed)
         except Exception:
             logger.exception("Failed to import %s data for guild %s", fmt, ctx.guild.id)
-            await ctx.respond("Failed to import this data — check the bot's logs for details.", ephemeral=True)
+            await ctx.respond(
+                f"{Icon.ERROR} Failed to import this data — check the bot's logs for details.", ephemeral=True
+            )
             return
 
         lines = "\n".join(f"**{label}:** {count}" for label, count in result.counts.items())
         container = discord.ui.Container(
-            discord.ui.TextDisplay("**Imported Data**"), discord.ui.TextDisplay(lines), color=discord.Color.green()
+            discord.ui.TextDisplay(f"## {Icon.IMPORT} Imported Data"),
+            discord.ui.TextDisplay(lines),
+            color=discord.Color.green(),
         )
         await ctx.respond(view=LayoutView(container), ephemeral=True)
 

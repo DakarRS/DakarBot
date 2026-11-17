@@ -404,7 +404,7 @@ class ModerationCog(DakarCog, name="Moderation"):
         if channel is None:
             return
         container = discord.ui.Container(
-            discord.ui.TextDisplay(f"**Restored mute | {member.display_name}**"),
+            discord.ui.TextDisplay(f"## Restored mute — {member.display_name}"),
             discord.ui.TextDisplay(f"Mute ID: {mute.id}"),
             discord.ui.TextDisplay(f"-# User ID: {member.id}"),
             color=discord.Color.orange(),

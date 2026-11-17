@@ -26,6 +26,8 @@ Two things confirmed by inspecting pycord's own implementation before relying on
   and updates matching items in place instead of flattening/replacing the tree.
 """
 
+from typing import Sequence
+
 import discord
 from discord.ui.view import _walk_all_components_v2
 
@@ -44,3 +46,51 @@ class LayoutView(discord.ui.BaseView):
             existing = current.get(key)
             if existing is not None:
                 existing.refresh_component(component)
+
+
+def format_list_or_inline(items: Sequence[str], threshold: int = 3) -> str:
+    """A handful of items reads fine comma-separated on one line; more than a
+    handful gets lost that way, so it switches to a real bullet list — matches
+    modbot's own KeyValueEmbed.addListOrShortList."""
+    items = list(items)
+    if not items:
+        return "None"
+    if len(items) <= threshold:
+        return ", ".join(items)
+    return "\n".join(f"- {item}" for item in items)
+
+
+class Icon:
+    """Plain unicode stand-ins for modbot's config-driven custom emoji (its
+    inlineEmojiIfExists/componentEmojiIfExists calls reference per-bot custom emoji
+    IDs that don't exist in this port) — used the same way modbot uses them: as a
+    prefix on headings, key-value fields, and button labels, not sprinkled into every
+    line of body text."""
+
+    # generic
+    SUCCESS = "✅"
+    ERROR = "❌"
+    WARNING = "⚠️"
+    REFRESH = "🔄"
+    DELETE = "🗑️"
+    ID = "🆔"
+    CREATED = "📅"
+    JOINED = "📥"
+
+    # moderation domain
+    MODERATIONS = "📋"
+    AVATAR = "🖼️"
+    LOCK = "🔒"
+    UNLOCK = "🔓"
+
+    # server/settings
+    SERVER = "🏠"
+    ROLE = "🎭"
+    SEARCH = "🔍"
+    SHIELD = "🛡️"
+    AUTOMOD = "🤖"
+    LADDER = "⚖️"
+    BAD_WORD = "🚫"
+    AUTO_RESPONSE = "💬"
+    EXPORT = "📤"
+    IMPORT = "📥"

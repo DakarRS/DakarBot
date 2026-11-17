@@ -16,7 +16,7 @@ async def run(cog: "ModerationCog", ctx: discord.ApplicationContext, user: disco
         return
 
     container = discord.ui.Container(
-        discord.ui.TextDisplay("**Clear all moderations?**"),
+        discord.ui.TextDisplay("## ⚠️ Clear all moderations?"),
         discord.ui.TextDisplay(
             f"This will permanently delete all {count} moderation(s) for {user.mention}."
         ),

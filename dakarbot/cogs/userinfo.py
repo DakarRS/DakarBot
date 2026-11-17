@@ -20,8 +20,8 @@ import discord
 
 from ..bot import DakarBot, DakarCog
 from ..moderation import models
-from ..moderation.models import ModerationAction
-from ..ui import LayoutView
+from ..moderation.models import ModerationAction, resolve_action_emoji
+from ..ui import Icon, LayoutView
 from .moderation.commands import ban, kick, mute, pardon, strike, unban, unmute
 from .moderation.commands.list_cases import ModerationListView
 
@@ -41,7 +41,7 @@ def build_avatar_view(user: discord.abc.User, guild: Optional[discord.Guild], us
     member = guild.get_member(user.id) if guild else None
     url = _avatar_url(user, member, use_server_profile)
     container = discord.ui.Container(
-        discord.ui.TextDisplay(f"**Avatar of {discord.utils.escape_markdown(user.display_name)}**"),
+        discord.ui.TextDisplay(f"## {Icon.AVATAR} Avatar of {discord.utils.escape_markdown(user.display_name)}"),
         discord.ui.MediaGallery(discord.MediaGalleryItem(url)),
         color=discord.Color.blue(),
     )
@@ -101,43 +101,59 @@ class UserInfoView(LayoutView):
 
         action_buttons = []
 
-        strike_btn = discord.ui.Button(label="Strike", style=discord.ButtonStyle.danger)
+        strike_btn = discord.ui.Button(
+            label="Strike", emoji=resolve_action_emoji(ModerationAction.STRIKE), style=discord.ButtonStyle.danger
+        )
         strike_btn.callback = self._strike
         action_buttons.append(strike_btn)
 
         if is_member:
-            kick_btn = discord.ui.Button(label="Kick", style=discord.ButtonStyle.danger)
+            kick_btn = discord.ui.Button(
+                label="Kick", emoji=resolve_action_emoji(ModerationAction.KICK), style=discord.ButtonStyle.danger
+            )
             kick_btn.callback = self._kick
             action_buttons.append(kick_btn)
 
         if is_muted:
-            mute_btn = discord.ui.Button(label="Unmute", style=discord.ButtonStyle.success)
+            mute_btn = discord.ui.Button(
+                label="Unmute", emoji=resolve_action_emoji(ModerationAction.UNMUTE), style=discord.ButtonStyle.success
+            )
             mute_btn.callback = self._unmute
         else:
-            mute_btn = discord.ui.Button(label="Mute", style=discord.ButtonStyle.danger)
+            mute_btn = discord.ui.Button(
+                label="Mute", emoji=resolve_action_emoji(ModerationAction.MUTE), style=discord.ButtonStyle.danger
+            )
             mute_btn.callback = self._mute
         action_buttons.append(mute_btn)
 
         if is_banned:
-            ban_btn = discord.ui.Button(label="Unban", style=discord.ButtonStyle.success)
+            ban_btn = discord.ui.Button(
+                label="Unban", emoji=resolve_action_emoji(ModerationAction.UNBAN), style=discord.ButtonStyle.success
+            )
             ban_btn.callback = self._unban
         else:
-            ban_btn = discord.ui.Button(label="Ban", style=discord.ButtonStyle.danger)
+            ban_btn = discord.ui.Button(
+                label="Ban", emoji=resolve_action_emoji(ModerationAction.BAN), style=discord.ButtonStyle.danger
+            )
             ban_btn.callback = self._ban
         action_buttons.append(ban_btn)
 
         if has_strikes:
-            pardon_btn = discord.ui.Button(label="Pardon", style=discord.ButtonStyle.success)
+            pardon_btn = discord.ui.Button(
+                label="Pardon", emoji=resolve_action_emoji(ModerationAction.PARDON), style=discord.ButtonStyle.success
+            )
             pardon_btn.callback = self._pardon
             action_buttons.append(pardon_btn)
 
         action_row = discord.ui.ActionRow(*action_buttons)
 
-        refresh_btn = discord.ui.Button(label="Refresh", style=discord.ButtonStyle.secondary)
+        refresh_btn = discord.ui.Button(label="Refresh", emoji=Icon.REFRESH, style=discord.ButtonStyle.secondary)
         refresh_btn.callback = self._refresh
-        avatar_btn = discord.ui.Button(label="Avatar", style=discord.ButtonStyle.secondary)
+        avatar_btn = discord.ui.Button(label="Avatar", emoji=Icon.AVATAR, style=discord.ButtonStyle.secondary)
         avatar_btn.callback = self._avatar
-        moderations_btn = discord.ui.Button(label="Moderations", style=discord.ButtonStyle.secondary)
+        moderations_btn = discord.ui.Button(
+            label="Moderations", emoji=Icon.MODERATIONS, style=discord.ButtonStyle.secondary
+        )
         moderations_btn.callback = self._moderations
         info_row = discord.ui.ActionRow(refresh_btn, avatar_btn, moderations_btn)
 
@@ -146,7 +162,9 @@ class UserInfoView(LayoutView):
     @staticmethod
     async def _check_perm(interaction: discord.Interaction, permission: str) -> bool:
         if not getattr(interaction.user.guild_permissions, permission):
-            await interaction.response.send_message("You don't have permission to do that.", ephemeral=True)
+            await interaction.response.send_message(
+                f"{Icon.ERROR} You don't have permission to do that.", ephemeral=True
+            )
             return False
         return True
 
@@ -212,16 +230,16 @@ class UserInfoCog(DakarCog, name="UserInfo"):
         member = guild.get_member(user.id)
 
         details = [
-            f"**Discord ID:** {user.id}",
-            f"**Created:** <t:{int(user.created_at.timestamp())}:D>",
+            f"{Icon.ID} **Discord ID:** {user.id}",
+            f"{Icon.CREATED} **Created:** <t:{int(user.created_at.timestamp())}:D>",
         ]
         if member is not None and member.joined_at:
-            details.append(f"**Joined:** <t:{int(member.joined_at.timestamp())}:D>")
+            details.append(f"{Icon.JOINED} **Joined:** <t:{int(member.joined_at.timestamp())}:D>")
 
         moderations = await models.list_for_user(self.db, guild.id, user.id)
         strike_sum = await models.get_strike_sum(self.db, guild.id, user.id)
-        details.append(f"**Moderations:** {len(moderations)}")
-        details.append(f"**Strike count:** {strike_sum}")
+        details.append(f"{Icon.MODERATIONS} **Moderations:** {len(moderations)}")
+        details.append(f"{resolve_action_emoji(ModerationAction.STRIKE)} **Strike count:** {strike_sum}")
 
         color = discord.Color.green()
 
@@ -229,26 +247,28 @@ class UserInfoCog(DakarCog, name="UserInfo"):
         is_muted = mute_info is not None
         if mute_info is not None:
             reason, comment, end = mute_info
-            details.append(f"**Muted:** {reason}")
+            mute_emoji = resolve_action_emoji(ModerationAction.MUTE)
+            details.append(f"{mute_emoji} **Muted:** {reason}")
             if end:
-                details.append(f"**Muted until:** <t:{end}:f>")
+                details.append(f"⏰ **Muted until:** <t:{end}:f>")
             if comment:
-                details.append(f"**Mute comment:** {comment}")
+                details.append(f"📝 **Mute comment:** {comment}")
             color = discord.Color.orange()
 
         ban_info = await _get_ban_info(self.db, guild, user)
         is_banned = ban_info is not None
         if ban_info is not None:
             reason, comment, end = ban_info
-            details.append(f"**Banned:** {reason}")
+            ban_emoji = resolve_action_emoji(ModerationAction.BAN)
+            details.append(f"{ban_emoji} **Banned:** {reason}")
             if end:
-                details.append(f"**Banned until:** <t:{end}:f>")
+                details.append(f"⏰ **Banned until:** <t:{end}:f>")
             if comment:
-                details.append(f"**Ban comment:** {comment}")
+                details.append(f"📝 **Ban comment:** {comment}")
             color = discord.Color.red()
 
         section = discord.ui.Section(
-            discord.ui.TextDisplay(f"**{discord.utils.escape_markdown(user.display_name)}**"),
+            discord.ui.TextDisplay(f"## {discord.utils.escape_markdown(user.display_name)}"),
             discord.ui.TextDisplay("\n".join(details)),
             accessory=discord.ui.Thumbnail(url=user.display_avatar.url),
         )
