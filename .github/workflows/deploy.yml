@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
 
 env:
-  IMAGE: ghcr.io/joshuaslui/dakarbot
+  IMAGE: ghcr.io/dakarrs/dakarbot
 
 jobs:
   test:

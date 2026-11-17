@@ -2,7 +2,7 @@ name: dakarbot
 
 services:
   bot:
-    image: ghcr.io/joshuaslui/dakarbot:${IMAGE_TAG:?set IMAGE_TAG}
+    image: ghcr.io/dakarrs/dakarbot:${IMAGE_TAG:?set IMAGE_TAG}
     restart: always
     env_file: .env
     environment:

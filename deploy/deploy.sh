@@ -9,7 +9,7 @@ if ! [[ "$sha" =~ ^[0-9a-f]{40}$ ]]; then
 fi
 
 cd /opt/dakarbot
-curl -fsSL "https://raw.githubusercontent.com/JoshuaSlui/DakarBot/$sha/deploy/docker-compose.prod.yml" \
+curl -fsSL "https://raw.githubusercontent.com/DakarRS/DakarBot/$sha/deploy/docker-compose.prod.yml" \
   -o docker-compose.yml.new
 
 previous="$(cat .deployed 2>/dev/null || true)"
