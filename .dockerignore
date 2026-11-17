@@ -7,3 +7,5 @@ __pycache__/
 Dockerfile
 docker-compose.yml
 .gitignore
+deploy/
+.github/

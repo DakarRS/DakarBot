@@ -1,0 +1,34 @@
+name: dakarbot
+
+services:
+  bot:
+    image: ghcr.io/joshuaslui/dakarbot:${IMAGE_TAG:?set IMAGE_TAG}
+    restart: always
+    env_file: .env
+    environment:
+      DAKARBOT_DATABASE_HOST: postgres
+      DAKARBOT_DATABASE_PORT: "5432"
+      DAKARBOT_DATABASE_USER: dakarbot
+      DAKARBOT_DATABASE_DATABASE: dakarbot
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  # Not published to the host: only the bot talks to it.
+  postgres:
+    image: postgres:16-alpine
+    restart: always
+    environment:
+      POSTGRES_DB: dakarbot
+      POSTGRES_USER: dakarbot
+      POSTGRES_PASSWORD: ${DAKARBOT_DATABASE_PASSWORD:?set DAKARBOT_DATABASE_PASSWORD}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U dakarbot -d dakarbot"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+volumes:
+  postgres-data:
