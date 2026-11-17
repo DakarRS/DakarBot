@@ -12,6 +12,7 @@ from discord.ext import commands
 
 from ..bot import DakarBot, DakarCog
 from ..error_reporting import describe_interaction
+from ..moderation.duration import DurationTooLong
 from ..ui import INTERACTION_FAILED, Icon
 
 logger = logging.getLogger("dakarbot.errors")
@@ -33,7 +34,10 @@ class ErrorsCog(DakarCog, name="Errors"):
     ) -> None:
         original = getattr(error, "original", error)
 
-        if isinstance(error, commands.CommandOnCooldown):
+        if isinstance(original, DurationTooLong):
+            # Commands without their own ValueError handling (e.g. cooldown settings) land here.
+            await self._reply(ctx, str(original))
+        elif isinstance(error, commands.CommandOnCooldown):
             await self._reply(ctx, f"⏳ Slow down! Try again in {error.retry_after:.0f}s.")
         elif isinstance(error, commands.BotMissingPermissions):
             missing = ", ".join(p.replace("_", " ").title() for p in error.missing_permissions)

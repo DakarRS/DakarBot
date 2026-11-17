@@ -313,8 +313,10 @@ class SettingsCog(DakarCog, name="Settings"):
 
         try:
             duration_seconds = parse_duration(duration) if duration else None
-        except ValueError:
-            duration_seconds = None
+        except ValueError as exc:
+            # Falling back to no duration here would turn a too-long ban into a permanent one.
+            await ctx.respond(str(exc), ephemeral=True)
+            return
         entry = Punishment(action=PunishmentAction(punishment), duration=duration_seconds, count=strike_count)
         await self.guild_settings.set_punishment(ctx.guild.id, strike_count, entry)
         await ctx.respond(_describe_punishment(strike_count, entry))
