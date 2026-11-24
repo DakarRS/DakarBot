@@ -27,7 +27,7 @@ Two things confirmed by inspecting pycord's own implementation before relying on
 """
 
 import logging
-from typing import Sequence
+from typing import Awaitable, Callable, Optional, Sequence
 
 import discord
 from discord.ui.view import _walk_all_components_v2
@@ -55,6 +55,67 @@ class LayoutView(discord.ui.BaseView):
     async def on_error(self, error: Exception, item: discord.ui.Item, interaction: discord.Interaction) -> None:
         label = getattr(item, "label", None) or getattr(item, "custom_id", None) or type(item).__name__
         await report_interaction_error(f"{type(self).__name__} button `{label}`", error, interaction)
+
+
+class ConfirmView(LayoutView):
+    """Confirm/Cancel under a container. Only `user_id` (when given) can answer."""
+
+    def __init__(
+        self,
+        container: discord.ui.Container,
+        on_confirm: Callable[[], Awaitable[None]],
+        *,
+        danger: bool = False,
+        timeout: float = 60,
+        user_id: Optional[int] = None,
+    ):
+        self.message: discord.Message | discord.WebhookMessage | None = None
+        self._on_confirm = on_confirm
+        self._user_id = user_id
+
+        confirm_button = discord.ui.Button(
+            label="Confirm", style=discord.ButtonStyle.danger if danger else discord.ButtonStyle.success
+        )
+        confirm_button.callback = self._confirm
+        cancel_button = discord.ui.Button(label="Cancel", style=discord.ButtonStyle.secondary)
+        cancel_button.callback = self._cancel
+        super().__init__(container, discord.ui.ActionRow(confirm_button, cancel_button), timeout=timeout)
+
+    async def on_resolved(self) -> None:
+        """Runs once, however the prompt ends (confirm, cancel or timeout)."""
+
+    @staticmethod
+    def _status_view(text: str) -> LayoutView:
+        return LayoutView(discord.ui.TextDisplay(text))
+
+    async def _allowed(self, interaction: discord.Interaction) -> bool:
+        if self._user_id is not None and interaction.user.id != self._user_id:
+            await interaction.response.send_message("This prompt isn't for you.", ephemeral=True)
+            return False
+        return True
+
+    async def _confirm(self, interaction: discord.Interaction) -> None:
+        if not await self._allowed(interaction):
+            return
+        self.stop()
+        await self.on_resolved()
+        await interaction.response.edit_message(view=self._status_view("Confirmed, proceeding..."))
+        await self._on_confirm()
+
+    async def _cancel(self, interaction: discord.Interaction) -> None:
+        if not await self._allowed(interaction):
+            return
+        self.stop()
+        await self.on_resolved()
+        await interaction.response.edit_message(view=self._status_view("Cancelled."))
+
+    async def on_timeout(self) -> None:
+        await self.on_resolved()
+        if self.message is not None:
+            try:
+                await self.message.edit(view=self._status_view("This confirmation has expired."))
+            except discord.HTTPException:
+                pass
 
 
 async def report_interaction_error(what: str, error: Exception, interaction: discord.Interaction) -> None:

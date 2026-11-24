@@ -35,6 +35,7 @@ import discord
 from ..bot import DakarBot, DakarCog
 from ..channel_settings import ChannelSettings
 from ..ui import LayoutView, format_list_or_inline
+from ._guild_summary import guild_icon_container
 
 VIEW_AUDIT_LOG_PERMS = discord.Permissions(view_audit_log=True)
 MANAGE_MESSAGES_PERMS = discord.Permissions(manage_messages=True)
@@ -260,7 +261,17 @@ class GuildCog(DakarCog, name="Guild"):
             discord.ui.TextDisplay(features_text),
             color=discord.Color.red(),
         )
-        await ctx.respond(view=LayoutView(container))
+        if not guild.icon:
+            await ctx.respond(view=LayoutView(container))
+            return
+
+        icon_button = discord.ui.Button(label="Icon", style=discord.ButtonStyle.secondary)
+
+        async def show_icon(interaction: discord.Interaction) -> None:
+            await interaction.response.send_message(view=LayoutView(guild_icon_container(guild)))
+
+        icon_button.callback = show_icon
+        await ctx.respond(view=LayoutView(container, discord.ui.ActionRow(icon_button), timeout=180))
 
     @discord.slash_command(
         name="role", description="Show information about a role.", default_member_permissions=VIEW_AUDIT_LOG_PERMS

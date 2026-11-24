@@ -19,7 +19,7 @@ from typing import Awaitable, Callable
 import discord
 
 from ..db import Database
-from ..ui import LayoutView
+from ..ui import ConfirmView
 from .models import (
     CONFIRMATION_DURATION,
     MODERATION_WARN_DURATION,
@@ -56,7 +56,7 @@ def build_duplicate_warning_container(
     )
 
 
-class ConfirmationView(LayoutView):
+class ConfirmationView(ConfirmView):
     def __init__(
         self,
         db: Database,
@@ -68,38 +68,7 @@ class ConfirmationView(LayoutView):
     ):
         self.db = db
         self.confirmation = confirmation
-        self.message: discord.Message | discord.WebhookMessage | None = None
-        self._on_confirm = on_confirm
+        super().__init__(container, on_confirm, danger=danger, timeout=CONFIRMATION_DURATION)
 
-        confirm_button = discord.ui.Button(
-            label="Confirm",
-            style=discord.ButtonStyle.danger if danger else discord.ButtonStyle.success,
-        )
-        confirm_button.callback = self._confirm
-        cancel_button = discord.ui.Button(label="Cancel", style=discord.ButtonStyle.secondary)
-        cancel_button.callback = self._cancel
-
-        super().__init__(container, discord.ui.ActionRow(confirm_button, cancel_button), timeout=CONFIRMATION_DURATION)
-
-    @staticmethod
-    def _status_view(text: str) -> LayoutView:
-        return LayoutView(discord.ui.TextDisplay(text))
-
-    async def _confirm(self, interaction: discord.Interaction) -> None:
-        self.stop()
+    async def on_resolved(self) -> None:
         await delete_confirmation(self.db, self.confirmation.id)
-        await interaction.response.edit_message(view=self._status_view("Confirmed, proceeding..."))
-        await self._on_confirm()
-
-    async def _cancel(self, interaction: discord.Interaction) -> None:
-        self.stop()
-        await delete_confirmation(self.db, self.confirmation.id)
-        await interaction.response.edit_message(view=self._status_view("Cancelled."))
-
-    async def on_timeout(self) -> None:
-        await delete_confirmation(self.db, self.confirmation.id)
-        if self.message is not None:
-            try:
-                await self.message.edit(view=self._status_view("This confirmation has expired."))
-            except discord.HTTPException:
-                pass

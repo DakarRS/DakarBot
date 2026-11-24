@@ -128,6 +128,7 @@ class SettingsCog(DakarCog, name="Settings"):
             f"**Log channel:** {_channel_or_disabled(await gs.get_log_channel_id(guild_id))}\n"
             f"**Message log:** {_channel_or_disabled(await gs.get_message_log_channel_id(guild_id))}\n"
             f"**Join log:** {_channel_or_disabled(await gs.get_join_log_channel_id(guild_id))}\n"
+            f"**Currency log:** {_channel_or_disabled(await gs.get_currency_log_channel_id(guild_id))}\n"
             f"**Muted role:** {f'<@&{muted_role_id}>' if muted_role_id else 'Disabled'}"
         )
 
@@ -190,6 +191,18 @@ class SettingsCog(DakarCog, name="Settings"):
     ) -> None:
         await self._set_log_channel(
             ctx, channel, "Join log channel", self.guild_settings.set_join_log_channel_id
+        )
+
+    @settings.command(name="currency-log", description="Set (or disable) the currency log channel.")
+    async def currency_log(
+        self,
+        ctx: discord.ApplicationContext,
+        channel: discord.Option(
+            discord.TextChannel, description="Leave empty to disable", required=False, default=None
+        ),
+    ) -> None:
+        await self._set_log_channel(
+            ctx, channel, "Currency log channel", self.guild_settings.set_currency_log_channel_id
         )
 
     @settings.command(name="caps", description="Enable or disable the excessive-caps filter.")

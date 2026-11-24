@@ -28,6 +28,18 @@ DEBUG_GUILD_IDS = _split_ids(os.environ.get("DAKARBOT_DEBUG_GUILD_IDS")) or None
 _error_channel_raw = os.environ.get("DAKARBOT_ERROR_CHANNEL_ID")
 ERROR_CHANNEL_ID = int(_error_channel_raw) if _error_channel_raw else None
 
+
+def _channel_or_error_channel(name: str) -> int | None:
+    raw = os.environ.get(name)
+    return int(raw) if raw else ERROR_CHANNEL_ID
+
+
+# Bot-wide /suggest posts and the per-command usage log; both fall back to the error channel.
+SUGGESTIONS_CHANNEL_ID = _channel_or_error_channel("DAKARBOT_SUGGESTIONS_CHANNEL_ID")
+COMMAND_LOG_CHANNEL_ID = _channel_or_error_channel("DAKARBOT_COMMAND_LOG_CHANNEL_ID")
+
+SUPPORT_URL = os.environ.get("DAKARBOT_SUPPORT_URL", "https://discord.gg/uVzKhQbcbM")
+
 DB_HOST = os.environ.get("DAKARBOT_DATABASE_HOST", "localhost")
 DB_PORT = int(os.environ.get("DAKARBOT_DATABASE_PORT", "5432"))
 DB_USER = os.environ.get("DAKARBOT_DATABASE_USER")

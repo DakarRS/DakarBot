@@ -4,8 +4,11 @@ ENV PYTHONUNBUFFERED=1
 
 WORKDIR /app
 
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+# DEV=true adds the test tooling; production builds leave it out.
+ARG DEV=false
+COPY requirements.txt requirements-dev.txt ./
+RUN pip install --no-cache-dir -r requirements.txt \
+    && if [ "$DEV" = "true" ]; then pip install --no-cache-dir -r requirements-dev.txt; fi
 
 COPY . .
 

@@ -2,8 +2,9 @@
 from __future__ import annotations
 
 import re
+from contextlib import asynccontextmanager
 from pathlib import Path
-from typing import Any
+from typing import Any, AsyncIterator, Optional
 
 import asyncpg
 
@@ -19,13 +20,13 @@ class Database:
         self._pool = pool
 
     @classmethod
-    async def connect(cls) -> "Database":
+    async def connect(cls, database: Optional[str] = None) -> "Database":
         pool = await asyncpg.create_pool(
             host=settings.DB_HOST,
             port=settings.DB_PORT,
             user=settings.DB_USER,
             password=settings.DB_PASSWORD,
-            database=settings.DB_NAME,
+            database=database or settings.DB_NAME,
         )
         db = cls(pool)
         await db._init_schema()
@@ -39,6 +40,12 @@ class Database:
 
     async def close(self) -> None:
         await self._pool.close()
+
+    @asynccontextmanager
+    async def transaction(self, *, readonly: bool = False) -> AsyncIterator[asyncpg.Connection]:
+        async with self._pool.acquire() as conn:
+            async with conn.transaction(readonly=readonly):
+                yield conn
 
     async def execute(self, query: str, *args: Any) -> int:
         """Run a mutating query; returns the affected row count."""

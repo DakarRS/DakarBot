@@ -77,3 +77,38 @@ CREATE TABLE IF NOT EXISTS channel_settings (
 );
 
 CREATE INDEX IF NOT EXISTS channel_settings_guild_id ON channel_settings (guild_id);
+
+CREATE TABLE IF NOT EXISTS balances (
+    guild_id BIGINT NOT NULL,
+    user_id  BIGINT NOT NULL,
+    amount   BIGINT NOT NULL DEFAULT 0 CHECK (amount >= 0),
+    PRIMARY KEY (guild_id, user_id)
+);
+
+CREATE TABLE IF NOT EXISTS gifs (
+    id     SERIAL PRIMARY KEY,
+    action VARCHAR(20) NOT NULL,
+    url    TEXT NOT NULL,
+    UNIQUE (action, url)
+);
+
+CREATE TABLE IF NOT EXISTS blacklist (
+    kind      VARCHAR(10) NOT NULL,
+    target_id BIGINT NOT NULL,
+    reason    TEXT NULL DEFAULT NULL,
+    created   BIGINT NOT NULL,
+    PRIMARY KEY (kind, target_id)
+);
+
+CREATE TABLE IF NOT EXISTS suggestions (
+    id              SERIAL PRIMARY KEY,
+    user_id         BIGINT NOT NULL,
+    guild_id        BIGINT NULL DEFAULT NULL,
+    content         TEXT NOT NULL,
+    status          VARCHAR(10) NOT NULL DEFAULT 'pending',
+    channel_id      BIGINT NULL DEFAULT NULL,
+    message_id      BIGINT NULL DEFAULT NULL,
+    decided_by      BIGINT NULL DEFAULT NULL,
+    decision_reason TEXT NULL DEFAULT NULL,
+    created         BIGINT NOT NULL
+);

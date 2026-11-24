@@ -11,6 +11,25 @@ services:
       db:
         condition: service_healthy
 
+  # docker compose run --rm test
+  test:
+    build:
+      context: .
+      args:
+        DEV: "true"
+    profiles: ["test"]
+    env_file:
+      - .env
+    environment:
+      DAKARBOT_DATABASE_HOST: db
+      DAKARBOT_DATABASE_PORT: "5432"
+    volumes:
+      - .:/app
+    depends_on:
+      db:
+        condition: service_healthy
+    command: ["pytest"]
+
   db:
     image: postgres:16-alpine
     restart: unless-stopped

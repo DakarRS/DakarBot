@@ -16,6 +16,7 @@ import time
 from dataclasses import dataclass
 from typing import Any, Optional
 
+from .currency import DEFAULT_CURRENCY_NAME
 from .db import Database
 from .moderation.models import DEFAULT_LADDER, Punishment, PunishmentAction
 
@@ -90,6 +91,21 @@ class GuildSettings:
 
     async def set_join_log_channel_id(self, guild_id: int, channel_id: Optional[int]) -> None:
         await self._set_field(guild_id, "join_log_channel_id", channel_id)
+
+    async def get_currency_log_channel_id(self, guild_id: int) -> Optional[int]:
+        return await self._get_field(guild_id, "currency_log_channel_id")
+
+    async def set_currency_log_channel_id(self, guild_id: int, channel_id: Optional[int]) -> None:
+        await self._set_field(guild_id, "currency_log_channel_id", channel_id)
+
+    # ---- currency ----
+
+    async def get_currency_name(self, guild_id: int) -> str:
+        return await self._get_field(guild_id, "currency_name") or DEFAULT_CURRENCY_NAME
+
+    async def set_currency_name(self, guild_id: int, name: Optional[str]) -> None:
+        """None goes back to the default."""
+        await self._set_field(guild_id, "currency_name", name)
 
     # ---- muted role ----
 

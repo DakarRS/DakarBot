@@ -2,17 +2,22 @@
 from __future__ import annotations
 
 import logging
+import time
 from pathlib import Path
 from typing import Optional
 
+import aiohttp
 import discord
 from discord.ext import commands
 
 from . import settings
+from .blacklist import Blacklist
 from .channel_settings import ChannelSettings
 from .db import Database
 from .error_reporting import DiscordLogHandler, ErrorReporter
 from .guild_settings import GuildSettings
+from .social.gifs import GifStore
+from .social.seed_gifs import SEED_GIFS
 
 logger = logging.getLogger("dakarbot")
 
@@ -45,6 +50,9 @@ class DakarBot(commands.AutoShardedBot):
         self.db: Optional[Database] = None
         self.guild_settings: Optional[GuildSettings] = None
         self.channel_settings: Optional[ChannelSettings] = None
+        self.blacklist: Optional[Blacklist] = None
+        self.http_session: Optional[aiohttp.ClientSession] = None
+        self.started_at = time.time()
         # Messages the bot itself deleted, so the logging cog's on_message_delete
         # doesn't log its own housekeeping deletes as if a user's message vanished.
         # Delete-on-read, no TTL — mirrors modbot's Bot.js `deletedMessages` Set
@@ -101,6 +109,10 @@ class DakarBot(commands.AutoShardedBot):
         self.db = await Database.connect()
         self.guild_settings = GuildSettings(self.db)
         self.channel_settings = ChannelSettings(self.db)
+        self.blacklist = Blacklist(self.db)
+        await self.blacklist.load()
+        await GifStore(self.db).seed_if_empty(SEED_GIFS)
+        self.http_session = aiohttp.ClientSession(headers={"User-Agent": "DakarBot (Discord bot)"})
         await super().start(token, reconnect=reconnect)
 
     async def delete_message(self, message: discord.Message, reason: Optional[str] = None) -> None:
@@ -117,6 +129,8 @@ class DakarBot(commands.AutoShardedBot):
             self.dispatch("automod_delete", message, reason)
 
     async def close(self) -> None:
+        if self.http_session is not None:
+            await self.http_session.close()
         if self.db is not None:
             await self.db.close()
         await super().close()
@@ -149,3 +163,13 @@ class DakarCog(commands.Cog):
     def channel_settings(self) -> ChannelSettings:
         assert self.bot.channel_settings is not None
         return self.bot.channel_settings
+
+    @property
+    def blacklist(self) -> Blacklist:
+        assert self.bot.blacklist is not None
+        return self.bot.blacklist
+
+    @property
+    def http_session(self) -> aiohttp.ClientSession:
+        assert self.bot.http_session is not None
+        return self.bot.http_session
