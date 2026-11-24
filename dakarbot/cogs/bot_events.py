@@ -9,6 +9,7 @@ from discord.ext import commands
 from .. import settings
 from ..blacklist import BlacklistKind
 from ..bot import DakarBot, DakarCog
+from ..error_reporting import describe_guild
 from ..ui import LayoutView
 from ._guild_summary import guild_summary_container
 
@@ -67,7 +68,7 @@ class BotEventsCog(DakarCog, name="BotEvents"):
         channel = await self._channel(settings.COMMAND_LOG_CHANNEL_ID)
         if channel is None:
             return
-        where = f"**{discord.utils.escape_markdown(ctx.guild.name)}** (`{ctx.guild.id}`) <#{ctx.channel_id}>" if ctx.guild else "DMs"
+        where = describe_guild(ctx.guild) + (f" <#{ctx.channel_id}>" if ctx.guild else "")
         text = f"`/{ctx.command.qualified_name}` by {ctx.author.mention} (`{ctx.author.id}`) in {where}"
         try:
             await channel.send(text, allowed_mentions=discord.AllowedMentions.none())

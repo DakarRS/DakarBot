@@ -7,8 +7,8 @@ import discord
 import psutil
 
 from .. import settings
-from ..about import build_invite_url
-from ..bot import DakarBot, DakarCog
+from ..about import build_invite_url, build_user_install_url
+from ..bot import EVERYWHERE, DakarBot, DakarCog
 from ..ui import LayoutView
 
 
@@ -29,7 +29,7 @@ class AboutCog(DakarCog, name="About"):
         self._process = psutil.Process()
         self._process.cpu_percent()  # first call only primes the counter
 
-    @discord.slash_command(name="about", description="Show information about the bot.")
+    @discord.slash_command(name="about", description="Show information about the bot.", **EVERYWHERE)
     async def about(self, ctx: discord.ApplicationContext) -> None:
         bot = self.bot
         users = sum(g.member_count or 0 for g in bot.guilds)
@@ -61,7 +61,8 @@ class AboutCog(DakarCog, name="About"):
             color=discord.Color.blurple(),
         )
         links = discord.ui.ActionRow(
-            discord.ui.Button(label="Invite", url=build_invite_url(bot.application_id)),
+            discord.ui.Button(label="Add to server", url=build_invite_url(bot.application_id)),
+            discord.ui.Button(label="Add to my apps", url=build_user_install_url(bot.application_id)),
             discord.ui.Button(label="Support", url=settings.SUPPORT_URL),
         )
         await ctx.respond(view=LayoutView(container, links))

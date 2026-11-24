@@ -192,9 +192,17 @@ def restart_crashed_loop(loop: tasks.Loop, error: BaseException) -> None:
     )
 
 
+def describe_guild(guild: Optional[discord.Guild]) -> str:
+    if guild is None:
+        return "DMs"
+    # User-app commands in servers the bot isn't in only carry a partial guild with no name.
+    name = getattr(guild, "name", None)
+    return f"**{discord.utils.escape_markdown(name)}** (`{guild.id}`)" if name else f"a server without the bot (`{guild.id}`)"
+
+
 def describe_interaction(interaction: discord.Interaction) -> str:
     user = interaction.user
-    where = f"**{interaction.guild.name}** (`{interaction.guild.id}`)" if interaction.guild else "DMs"
+    where = describe_guild(interaction.guild)
     channel = f" in <#{interaction.channel_id}>" if interaction.channel_id else ""
     who = f"{user} (`{user.id}`)" if user else "unknown user"
     return f"by {who} on {where}{channel}"

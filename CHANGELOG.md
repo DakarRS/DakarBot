@@ -9,11 +9,14 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## Unreleased
 
 ### Added
-- This changelog.
+- User-app support: `/about`, `/emoji`, `/fox`, `/pokemon`, `/action`, `/avatar`,
+  `/suggest` and `/poll` can be added to your own account and used in DMs, group chats
+  and servers the bot isn't in. `/about` has an "Add to my apps" button for this.
 
 ## 2026-11-24
 
 ### Added
+- This changelog.
 - `/about`: servers, users, uptime, latency, memory/CPU and versions, with Invite and
   Support links.
 - Icon button on `/server` to view the server icon at full size.

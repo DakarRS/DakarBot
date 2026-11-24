@@ -2,7 +2,7 @@ from urllib.parse import parse_qs, urlparse
 
 import pytest
 
-from dakarbot.about import INVITE_PERMISSIONS, build_invite_url
+from dakarbot.about import INVITE_PERMISSIONS, build_invite_url, build_user_install_url
 from dakarbot.polls import PollInputError, parse_answers
 
 
@@ -38,3 +38,11 @@ def test_invite_permissions_cover_moderation_without_admin():
     for name in ("ban_members", "kick_members", "moderate_members", "manage_roles",
                  "manage_channels", "manage_messages", "view_audit_log", "send_messages"):
         assert getattr(perms, name), name
+
+
+def test_user_install_url_installs_to_account_with_commands_only():
+    query = parse_qs(urlparse(build_user_install_url(1234)).query)
+    assert query["client_id"] == ["1234"]
+    assert query["integration_type"] == ["1"]
+    assert query["scope"] == ["applications.commands"]
+    assert "permissions" not in query

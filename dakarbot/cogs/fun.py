@@ -4,7 +4,7 @@ from typing import Optional
 import discord
 from discord.ext import commands
 
-from ..bot import DakarBot, DakarCog
+from ..bot import EVERYWHERE, DakarBot, DakarCog
 from ..fun_apis import fetch_fox
 from ..pokemon import PokeApi, PokemonInfo
 from ..ui import LayoutView
@@ -54,7 +54,7 @@ class FunCog(DakarCog, name="Fun"):
     async def _pokemon_autocomplete(self, ctx: discord.AutocompleteContext) -> list[str]:
         return await self.pokeapi.search_names(ctx.value or "")
 
-    @discord.slash_command(name="fox", description="Get a random fox picture.")
+    @discord.slash_command(name="fox", description="Get a random fox picture.", **EVERYWHERE)
     @commands.cooldown(1, 5, commands.BucketType.user)
     async def fox(self, ctx: discord.ApplicationContext) -> None:
         url = await fetch_fox(self.http_session)
@@ -66,7 +66,7 @@ class FunCog(DakarCog, name="Fun"):
         )
         await ctx.respond(view=LayoutView(container))
 
-    @discord.slash_command(name="pokemon", description="Look up a Pokémon.")
+    @discord.slash_command(name="pokemon", description="Look up a Pokémon.", **EVERYWHERE)
     @commands.cooldown(1, 5, commands.BucketType.user)
     async def pokemon(
         self,

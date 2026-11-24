@@ -143,6 +143,18 @@ class DakarBot(commands.AutoShardedBot):
         logger.info("Logged in as %s (%s)", self.user, self.user.id if self.user else "unknown")
 
 
+# For commands that only reply, so they also work as a user-installed app: in DMs,
+# group chats and servers the bot isn't in.
+EVERYWHERE = {
+    "integration_types": {discord.IntegrationType.guild_install, discord.IntegrationType.user_install},
+    "contexts": {
+        discord.InteractionContextType.guild,
+        discord.InteractionContextType.bot_dm,
+        discord.InteractionContextType.private_channel,
+    },
+}
+
+
 class DakarCog(commands.Cog):
     """Shared base for DakarBot's cogs: bot/db/guild_settings access."""
 

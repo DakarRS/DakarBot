@@ -18,7 +18,7 @@ from typing import Optional, Union
 
 import discord
 
-from ..bot import DakarBot, DakarCog
+from ..bot import EVERYWHERE, DakarBot, DakarCog
 from ..moderation import models
 from ..moderation.models import ModerationAction
 from ..ui import LayoutView
@@ -279,7 +279,7 @@ class UserInfoCog(DakarCog, name="UserInfo"):
 
     # ---- /avatar ----
 
-    @discord.slash_command(name="avatar", description="Show the avatar of a user.")
+    @discord.slash_command(name="avatar", description="Show the avatar of a user.", **EVERYWHERE)
     async def avatar(
         self,
         ctx: discord.ApplicationContext,

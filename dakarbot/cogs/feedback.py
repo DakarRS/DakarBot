@@ -11,7 +11,7 @@ import discord
 from discord.ext import commands
 
 from .. import settings
-from ..bot import DakarBot, DakarCog
+from ..bot import EVERYWHERE, DakarBot, DakarCog
 from ..suggestions import (
     Suggestion,
     Suggestions,
@@ -91,7 +91,7 @@ class FeedbackCog(DakarCog, name="Feedback"):
     def store(self) -> Suggestions:
         return Suggestions(self.db)
 
-    @discord.slash_command(name="suggest", description="Suggest something for the bot.")
+    @discord.slash_command(name="suggest", description="Suggest something for the bot.", **EVERYWHERE)
     @commands.cooldown(1, 30, commands.BucketType.user)
     async def suggest(
         self,
@@ -105,7 +105,7 @@ class FeedbackCog(DakarCog, name="Feedback"):
         await ctx.defer(ephemeral=True)
         record = await self.store.create(ctx.author.id, ctx.guild_id, suggestion)
         channel = self.bot.get_channel(channel_id) or await self.bot.fetch_channel(channel_id)
-        view = build_suggestion_view(record, ctx.guild.name if ctx.guild else None)
+        view = build_suggestion_view(record, getattr(ctx.guild, "name", None))
         message = await channel.send(view=view, allowed_mentions=discord.AllowedMentions.none())
         view.stop()  # clicks go through on_interaction, not this in-memory view
         await self.store.set_message(record.id, message.channel.id, message.id)

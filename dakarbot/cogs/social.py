@@ -3,7 +3,7 @@ exorium's 20-odd social commands as a single command."""
 import discord
 from discord.ext import commands
 
-from ..bot import DakarBot, DakarCog
+from ..bot import EVERYWHERE, DakarBot, DakarCog
 from ..social.actions import ACTIONS, ActionError, describe
 from ..social.gifs import GifStore, is_media_url
 from ..ui import LayoutView
@@ -19,14 +19,13 @@ class SocialCog(DakarCog, name="Social"):
     def gifs(self) -> GifStore:
         return GifStore(self.db)
 
-    @discord.slash_command(name="action", description="Hug, pat, boop and more, with a GIF.")
-    @commands.guild_only()
+    @discord.slash_command(name="action", description="Hug, pat, boop and more, with a GIF.", **EVERYWHERE)
     @commands.cooldown(1, 3, commands.BucketType.user)
     async def action(
         self,
         ctx: discord.ApplicationContext,
         type: discord.Option(str, description="What to do", choices=ACTION_CHOICES),
-        member: discord.Option(discord.Member, description="Who to do it to", required=False, default=None),
+        member: discord.Option(discord.User, description="Who to do it to", required=False, default=None),
         reason: discord.Option(str, description="Why", required=False, default=None, max_length=256),
     ) -> None:
         action = ACTIONS[type]

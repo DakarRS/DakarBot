@@ -4,7 +4,7 @@ announce and say commands."""
 import discord
 from discord.ext import commands
 
-from ..bot import DakarBot, DakarCog
+from ..bot import EVERYWHERE, DakarBot, DakarCog
 from ..polls import DURATION_CHOICES_HOURS, QUESTION_MAX_LENGTH, PollInputError, parse_answers
 from ..ui import LayoutView, report_interaction_error
 
@@ -105,7 +105,7 @@ def _emoji_info_view(bot: DakarBot, emoji: discord.PartialEmoji) -> LayoutView:
 
 
 class UtilityCog(DakarCog, name="Utility"):
-    @discord.slash_command(name="emoji", description="Show a custom emoji's image and details.")
+    @discord.slash_command(name="emoji", description="Show a custom emoji's image and details.", **EVERYWHERE)
     async def emoji(
         self,
         ctx: discord.ApplicationContext,
@@ -117,8 +117,7 @@ class UtilityCog(DakarCog, name="Utility"):
             return
         await ctx.respond(view=_emoji_info_view(self.bot, parsed))
 
-    @discord.slash_command(name="poll", description="Start a poll in this channel.")
-    @commands.guild_only()
+    @discord.slash_command(name="poll", description="Start a poll in this channel.", **EVERYWHERE)
     @commands.cooldown(1, 10, commands.BucketType.user)
     async def poll(
         self,
