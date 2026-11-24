@@ -37,7 +37,7 @@ from ..error_reporting import restart_crashed_loop
 from ..filtering import checks, models, tracking
 from ..filtering.models import AutoResponse, BadWord, parse_trigger
 from ..moderation.models import Punishment, PunishmentAction
-from ..ui import Icon, LayoutView, format_list_or_inline
+from ..ui import LayoutView, format_list_or_inline
 from .moderation._util import parse_duration_option
 
 logger = logging.getLogger("dakarbot.filtering")
@@ -61,7 +61,7 @@ BAD_WORD_PUNISHMENT_CHOICES = [
 ]
 
 _LIST_CHUNK_SIZE = 3800
-_NO_SCOPE_ERROR = "❌ You must set `global` to True or pick a channel."
+_NO_SCOPE_ERROR = "You must set `global` to True or pick a channel."
 
 
 async def _bad_word_autocomplete(ctx: discord.AutocompleteContext) -> list[discord.OptionChoice]:
@@ -299,7 +299,7 @@ class FilteringCog(DakarCog, name="Filtering"):
     ) -> None:
         word = await models.get_bad_word(self.db, ctx.guild.id, id)
         if word is None:
-            await ctx.respond(f"❌ No bad-word with id #{id} found.", ephemeral=True)
+            await ctx.respond(f"No bad-word with id #{id} found.", ephemeral=True)
             return
 
         if trigger_type is not None or trigger is not None:
@@ -346,10 +346,10 @@ class FilteringCog(DakarCog, name="Filtering"):
     ) -> None:
         word = await models.get_bad_word(self.db, ctx.guild.id, id)
         if word is None:
-            await ctx.respond(f"❌ No bad-word with id #{id} found.", ephemeral=True)
+            await ctx.respond(f"No bad-word with id #{id} found.", ephemeral=True)
             return
         await models.delete_bad_word(self.db, ctx.guild.id, id)
-        await ctx.respond(f"🗑️ Deleted bad-word #{id}.")
+        await ctx.respond(f"Deleted bad-word #{id}.")
 
     @bad_word.command(name="show", description="Show a single bad-word filter.")
     async def bad_word_show(
@@ -359,7 +359,7 @@ class FilteringCog(DakarCog, name="Filtering"):
     ) -> None:
         word = await models.get_bad_word(self.db, ctx.guild.id, id)
         if word is None:
-            await ctx.respond(f"❌ No bad-word with id #{id} found.", ephemeral=True)
+            await ctx.respond(f"No bad-word with id #{id} found.", ephemeral=True)
             return
 
         delete_button = discord.ui.Button(label="Delete", style=discord.ButtonStyle.danger)
@@ -367,7 +367,7 @@ class FilteringCog(DakarCog, name="Filtering"):
         async def _delete(interaction: discord.Interaction) -> None:
             await models.delete_bad_word(self.db, ctx.guild.id, id)
             await interaction.response.edit_message(
-                view=LayoutView(discord.ui.TextDisplay(f"🗑️ Deleted bad-word #{id}."))
+                view=LayoutView(discord.ui.TextDisplay(f"Deleted bad-word #{id}."))
             )
 
         delete_button.callback = _delete
@@ -378,7 +378,7 @@ class FilteringCog(DakarCog, name="Filtering"):
     @bad_word.command(name="list", description="List all bad-word filters in this server.")
     async def bad_word_list(self, ctx: discord.ApplicationContext) -> None:
         words = await models.get_all_bad_words(self.db, ctx.guild.id)
-        await _send_chunked(ctx, f"{Icon.BAD_WORD} Bad-words", [_bad_word_overview_line(w) for w in words])
+        await _send_chunked(ctx, "Bad-words", [_bad_word_overview_line(w) for w in words])
 
     # ---- /auto-response ----
 
@@ -441,7 +441,7 @@ class FilteringCog(DakarCog, name="Filtering"):
     ) -> None:
         response_obj = await models.get_auto_response(self.db, ctx.guild.id, id)
         if response_obj is None:
-            await ctx.respond(f"❌ No auto-response with id #{id} found.", ephemeral=True)
+            await ctx.respond(f"No auto-response with id #{id} found.", ephemeral=True)
             return
 
         if trigger_type is not None or trigger is not None:
@@ -479,10 +479,10 @@ class FilteringCog(DakarCog, name="Filtering"):
     ) -> None:
         response_obj = await models.get_auto_response(self.db, ctx.guild.id, id)
         if response_obj is None:
-            await ctx.respond(f"❌ No auto-response with id #{id} found.", ephemeral=True)
+            await ctx.respond(f"No auto-response with id #{id} found.", ephemeral=True)
             return
         await models.delete_auto_response(self.db, ctx.guild.id, id)
-        await ctx.respond(f"🗑️ Deleted auto-response #{id}.")
+        await ctx.respond(f"Deleted auto-response #{id}.")
 
     @auto_response.command(name="show", description="Show a single auto-response.")
     async def auto_response_show(
@@ -492,7 +492,7 @@ class FilteringCog(DakarCog, name="Filtering"):
     ) -> None:
         response_obj = await models.get_auto_response(self.db, ctx.guild.id, id)
         if response_obj is None:
-            await ctx.respond(f"❌ No auto-response with id #{id} found.", ephemeral=True)
+            await ctx.respond(f"No auto-response with id #{id} found.", ephemeral=True)
             return
 
         delete_button = discord.ui.Button(label="Delete", style=discord.ButtonStyle.danger)
@@ -500,7 +500,7 @@ class FilteringCog(DakarCog, name="Filtering"):
         async def _delete(interaction: discord.Interaction) -> None:
             await models.delete_auto_response(self.db, ctx.guild.id, id)
             await interaction.response.edit_message(
-                view=LayoutView(discord.ui.TextDisplay(f"🗑️ Deleted auto-response #{id}."))
+                view=LayoutView(discord.ui.TextDisplay(f"Deleted auto-response #{id}."))
             )
 
         delete_button.callback = _delete
@@ -513,7 +513,7 @@ class FilteringCog(DakarCog, name="Filtering"):
     @auto_response.command(name="list", description="List all auto-responses in this server.")
     async def auto_response_list(self, ctx: discord.ApplicationContext) -> None:
         responses = await models.get_all_auto_responses(self.db, ctx.guild.id)
-        await _send_chunked(ctx, f"{Icon.AUTO_RESPONSE} Auto-responses", [_auto_response_overview_line(r) for r in responses])
+        await _send_chunked(ctx, "Auto-responses", [_auto_response_overview_line(r) for r in responses])
 
 
 def setup(bot: DakarBot) -> None:

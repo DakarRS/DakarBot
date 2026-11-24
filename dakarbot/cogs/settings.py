@@ -21,10 +21,10 @@ from typing import Awaitable, Callable, Optional
 import discord
 
 from ..bot import DakarBot, DakarCog
-from ..ui import Icon, LayoutView, format_list_or_inline
+from ..ui import LayoutView, format_list_or_inline
 from ..moderation import models
 from ..moderation.duration import format_duration, parse_duration
-from ..moderation.models import ModerationAction, Punishment, PunishmentAction, resolve_action_emoji
+from ..moderation.models import ModerationAction, Punishment, PunishmentAction
 
 logger = logging.getLogger("dakarbot.settings")
 
@@ -72,10 +72,7 @@ def _threshold_or_disabled(value: int) -> str:
 
 
 def _describe_punishment(strikes: int, punishment: Punishment) -> str:
-    # PunishmentAction.NONE has no ModerationAction counterpart.
-    is_none = punishment.action is PunishmentAction.NONE
-    emoji = "" if is_none else resolve_action_emoji(ModerationAction(punishment.action.value))
-    text = f"{emoji} At **{strikes}** strikes: **{punishment.action.value}**"
+    text = f"At **{strikes}** strikes: **{punishment.action.value}**"
     if punishment.duration:
         text += f" for {format_duration(punishment.duration)}"
     return text
@@ -108,12 +105,11 @@ class SettingsCog(DakarCog, name="Settings"):
         can actually post there, save it (or clear it), and confirm."""
         if channel is not None and not _channel_usable(ctx.guild, channel):
             await ctx.respond(
-                f"{Icon.ERROR} I don't have permission to send messages in {channel.mention}.", ephemeral=True
+                f"I don't have permission to send messages in {channel.mention}.", ephemeral=True
             )
             return
         await setter(ctx.guild.id, channel.id if channel else None)
-        icon = Icon.SUCCESS if channel else "🚫"
-        await ctx.respond(f"{icon} {label} set to {channel.mention}." if channel else f"{icon} {label} disabled.")
+        await ctx.respond(f"{label} set to {channel.mention}." if channel else f"{label} disabled.")
 
     # ---- top-level group ----
 
@@ -128,30 +124,30 @@ class SettingsCog(DakarCog, name="Settings"):
 
         muted_role_id = await gs.get_muted_role_id(guild_id)
         moderation_text = (
-            f"### {Icon.SHIELD} Moderation\n"
-            f"📝 Log channel: {_channel_or_disabled(await gs.get_log_channel_id(guild_id))}\n"
-            f"✏️ Message log: {_channel_or_disabled(await gs.get_message_log_channel_id(guild_id))}\n"
-            f"👋 Join log: {_channel_or_disabled(await gs.get_join_log_channel_id(guild_id))}\n"
-            f"🔇 Muted role: {f'<@&{muted_role_id}>' if muted_role_id else 'Disabled'}"
+            "### Moderation\n"
+            f"**Log channel:** {_channel_or_disabled(await gs.get_log_channel_id(guild_id))}\n"
+            f"**Message log:** {_channel_or_disabled(await gs.get_message_log_channel_id(guild_id))}\n"
+            f"**Join log:** {_channel_or_disabled(await gs.get_join_log_channel_id(guild_id))}\n"
+            f"**Muted role:** {f'<@&{muted_role_id}>' if muted_role_id else 'Disabled'}"
         )
 
         protected_role_ids = await gs.get_protected_role_ids(guild_id)
-        protected_text = "### 🚫 Protected Roles\n" + format_list_or_inline(
+        protected_text = "### Protected Roles\n" + format_list_or_inline(
             [f"<@&{r}>" for r in protected_role_ids]
         )
 
         automod_text = (
-            f"### {Icon.AUTOMOD} Automod\n"
-            f"🔗 Invites: {'Allowed' if await gs.get_invites_allowed(guild_id) else 'Forbidden'}\n"
-            f"⏱️ Link cooldown: {_cooldown_or_disabled(await gs.get_link_cooldown(guild_id))}\n"
-            f"📎 Attachment cooldown: {_cooldown_or_disabled(await gs.get_attachment_cooldown(guild_id))}\n"
-            f"🔠 Caps filter: {'Enabled' if await gs.get_caps_enabled(guild_id) else 'Disabled'}\n"
-            f"💬 Spam threshold: {_threshold_or_disabled(await gs.get_anti_spam(guild_id))}\n"
-            f"🔁 Similar messages threshold: {_threshold_or_disabled(await gs.get_similar_messages(guild_id))}"
+            "### Automod\n"
+            f"**Invites:** {'Allowed' if await gs.get_invites_allowed(guild_id) else 'Forbidden'}\n"
+            f"**Link cooldown:** {_cooldown_or_disabled(await gs.get_link_cooldown(guild_id))}\n"
+            f"**Attachment cooldown:** {_cooldown_or_disabled(await gs.get_attachment_cooldown(guild_id))}\n"
+            f"**Caps filter:** {'Enabled' if await gs.get_caps_enabled(guild_id) else 'Disabled'}\n"
+            f"**Spam threshold:** {_threshold_or_disabled(await gs.get_anti_spam(guild_id))}\n"
+            f"**Similar messages threshold:** {_threshold_or_disabled(await gs.get_similar_messages(guild_id))}"
         )
 
         container = discord.ui.Container(
-            discord.ui.TextDisplay(f"## {Icon.SERVER} {ctx.guild.name} Settings"),
+            discord.ui.TextDisplay(f"## {ctx.guild.name} Settings"),
             discord.ui.Separator(),
             discord.ui.TextDisplay(moderation_text),
             discord.ui.Separator(),
@@ -203,8 +199,7 @@ class SettingsCog(DakarCog, name="Settings"):
         enabled: discord.Option(bool, description="Whether to filter excessive caps"),
     ) -> None:
         await self.guild_settings.set_caps_enabled(ctx.guild.id, enabled)
-        icon = Icon.SUCCESS if enabled else "🚫"
-        await ctx.respond(f"{icon} Caps filter {'enabled' if enabled else 'disabled'}.")
+        await ctx.respond(f"Caps filter {'enabled' if enabled else 'disabled'}.")
 
     @settings.command(name="spam", description="Set the message-per-minute spam threshold.")
     async def spam(
@@ -218,7 +213,7 @@ class SettingsCog(DakarCog, name="Settings"):
         resolved = value if value is not None else -1
         await self.guild_settings.set_anti_spam(ctx.guild.id, resolved)
         await ctx.respond(
-            f"{Icon.SUCCESS} Spam threshold set to {value} messages/minute." if value else "🚫 Spam detection disabled."
+            f"Spam threshold set to {value} messages/minute." if value else "Spam detection disabled."
         )
 
     @settings.command(name="similar-messages", description="Set the repeated/similar-message threshold.")
@@ -233,9 +228,9 @@ class SettingsCog(DakarCog, name="Settings"):
         resolved = value if value is not None else -1
         await self.guild_settings.set_similar_messages(ctx.guild.id, resolved)
         await ctx.respond(
-            f"{Icon.SUCCESS} Similar-messages threshold set to {value}."
+            f"Similar-messages threshold set to {value}."
             if value
-            else "🚫 Similar-message detection disabled."
+            else "Similar-message detection disabled."
         )
 
     @settings.command(name="link-cool-down", description="Set the per-user cooldown between posting links.")
@@ -252,9 +247,9 @@ class SettingsCog(DakarCog, name="Settings"):
         resolved = seconds if seconds is not None else -1
         await self.guild_settings.set_link_cooldown(ctx.guild.id, resolved)
         await ctx.respond(
-            f"{Icon.SUCCESS} Link cooldown set to {format_duration(resolved)}."
+            f"Link cooldown set to {format_duration(resolved)}."
             if resolved >= 0
-            else "🚫 Link cooldown disabled."
+            else "Link cooldown disabled."
         )
 
     @settings.command(name="attachment-cool-down", description="Set the per-user cooldown between posting attachments.")
@@ -269,9 +264,9 @@ class SettingsCog(DakarCog, name="Settings"):
         resolved = seconds if seconds is not None else -1
         await self.guild_settings.set_attachment_cooldown(ctx.guild.id, resolved)
         await ctx.respond(
-            f"{Icon.SUCCESS} Attachment cooldown set to {format_duration(resolved)}."
+            f"Attachment cooldown set to {format_duration(resolved)}."
             if resolved >= 0
-            else "🚫 Attachment cooldown disabled."
+            else "Attachment cooldown disabled."
         )
 
     # ---- /settings punishments ----
@@ -286,7 +281,7 @@ class SettingsCog(DakarCog, name="Settings"):
             return
         lines = [_describe_punishment(strikes, p) for strikes, p in sorted(ladder.items())]
         container = discord.ui.Container(
-            discord.ui.TextDisplay(f"## {Icon.LADDER} Punishment Ladder"),
+            discord.ui.TextDisplay("## Punishment Ladder"),
             discord.ui.TextDisplay("\n".join(f"- {line}" for line in lines)),
             color=discord.Color.blue(),
         )
@@ -305,7 +300,7 @@ class SettingsCog(DakarCog, name="Settings"):
         if punishment == "none":
             removed = await self.guild_settings.remove_punishment(ctx.guild.id, strike_count)
             await ctx.respond(
-                f"{Icon.SUCCESS} Removed the punishment at {strike_count} strikes."
+                f"Removed the punishment at {strike_count} strikes."
                 if removed
                 else f"There was no punishment set at {strike_count} strikes."
             )
@@ -331,7 +326,7 @@ class SettingsCog(DakarCog, name="Settings"):
     ) -> None:
         added = await self.guild_settings.add_protected_role(ctx.guild.id, role.id)
         if added:
-            await ctx.respond(f"{Icon.SHIELD} {role.mention} is now protected.")
+            await ctx.respond(f"{role.mention} is now protected.")
         else:
             await ctx.respond(f"{role.mention} is already protected.", ephemeral=True)
 
@@ -341,7 +336,7 @@ class SettingsCog(DakarCog, name="Settings"):
     ) -> None:
         removed = await self.guild_settings.remove_protected_role(ctx.guild.id, role.id)
         if removed:
-            await ctx.respond(f"🚫 {role.mention} is no longer protected.")
+            await ctx.respond(f"{role.mention} is no longer protected.")
         else:
             await ctx.respond(f"{role.mention} isn't protected.", ephemeral=True)
 
@@ -361,7 +356,7 @@ class SettingsCog(DakarCog, name="Settings"):
         if not mentions:
             await ctx.respond("No protected roles configured.")
             return
-        await ctx.respond(f"{Icon.SHIELD} **Protected roles:**\n" + format_list_or_inline(mentions))
+        await ctx.respond("**Protected roles:**\n" + format_list_or_inline(mentions))
 
     # ---- /settings muted-role ----
 
@@ -421,19 +416,19 @@ class SettingsCog(DakarCog, name="Settings"):
     async def muted_role_create(self, ctx: discord.ApplicationContext) -> None:
         role = await ctx.guild.create_role(name="Muted", hoist=False, reason="Muted role setup")
         if await self._apply_muted_role(ctx, role):
-            await ctx.respond(f"🔇 Created and set the muted role to {role.mention}.")
+            await ctx.respond(f"Created and set the muted role to {role.mention}.")
 
     @muted_role.command(name="set", description="Use an existing role as the muted role.")
     async def muted_role_set(
         self, ctx: discord.ApplicationContext, role: discord.Option(discord.Role, description="Role to use")
     ) -> None:
         if await self._apply_muted_role(ctx, role):
-            await ctx.respond(f"🔇 Muted role set to {role.mention}.")
+            await ctx.respond(f"Muted role set to {role.mention}.")
 
     @muted_role.command(name="disable", description="Disable the muted role.")
     async def muted_role_disable(self, ctx: discord.ApplicationContext) -> None:
         await self.guild_settings.set_muted_role_id(ctx.guild.id, None)
-        await ctx.respond("🚫 Muted role disabled. This does not unmute anyone currently muted with it.")
+        await ctx.respond("Muted role disabled. This does not unmute anyone currently muted with it.")
 
     # ---- /settings invites ----
 
@@ -453,10 +448,10 @@ class SettingsCog(DakarCog, name="Settings"):
             effective = override if override is not None else guild_default
             source = "channel override" if override is not None else "server default"
             await ctx.respond(
-                f"🔗 Invites are **{'allowed' if effective else 'forbidden'}** in {channel.mention} ({source})."
+                f"Invites are **{'allowed' if effective else 'forbidden'}** in {channel.mention} ({source})."
             )
         else:
-            await ctx.respond(f"🔗 Invites are **{'allowed' if guild_default else 'forbidden'}** by default.")
+            await ctx.respond(f"Invites are **{'allowed' if guild_default else 'forbidden'}** by default.")
 
     @invites.command(name="set", description="Set the invite-link policy, server-wide or for one channel.")
     async def invites_set(
@@ -475,13 +470,13 @@ class SettingsCog(DakarCog, name="Settings"):
             value = None if invites == "default" else (invites == "allowed")
             await self.guild_settings.set_channel_invites_override(ctx.guild.id, channel.id, value)
             if value is None:
-                await ctx.respond(f"🔗 {channel.mention} now inherits the server default for invites.")
+                await ctx.respond(f"{channel.mention} now inherits the server default for invites.")
             else:
-                await ctx.respond(f"🔗 Invites are now **{'allowed' if value else 'forbidden'}** in {channel.mention}.")
+                await ctx.respond(f"Invites are now **{'allowed' if value else 'forbidden'}** in {channel.mention}.")
         else:
             allowed = invites == "allowed"
             await self.guild_settings.set_invites_allowed(ctx.guild.id, allowed)
-            await ctx.respond(f"🔗 Invites are now **{'allowed' if allowed else 'forbidden'}** by default.")
+            await ctx.respond(f"Invites are now **{'allowed' if allowed else 'forbidden'}** by default.")
 
 
 def setup(bot: DakarBot) -> None:

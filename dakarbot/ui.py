@@ -74,40 +74,4 @@ def format_list_or_inline(items: Sequence[str], threshold: int = 3) -> str:
     return "\n".join(f"- {item}" for item in items)
 
 
-class Icon:
-    """Plain unicode stand-ins for modbot's config-driven custom emoji (its
-    inlineEmojiIfExists/componentEmojiIfExists calls reference per-bot custom emoji
-    IDs that don't exist in this port) — used the same way modbot uses them: as a
-    prefix on headings, key-value fields, and button labels, not sprinkled into every
-    line of body text."""
-
-    # generic
-    SUCCESS = "✅"
-    ERROR = "❌"
-    WARNING = "⚠️"
-    REFRESH = "🔄"
-    DELETE = "🗑️"
-    ID = "🆔"
-    CREATED = "📅"
-    JOINED = "📥"
-
-    # moderation domain
-    MODERATIONS = "📋"
-    AVATAR = "🖼️"
-    LOCK = "🔒"
-    UNLOCK = "🔓"
-
-    # server/settings
-    SERVER = "🏠"
-    ROLE = "🎭"
-    SEARCH = "🔍"
-    SHIELD = "🛡️"
-    AUTOMOD = "🤖"
-    LADDER = "⚖️"
-    BAD_WORD = "🚫"
-    AUTO_RESPONSE = "💬"
-    EXPORT = "📤"
-    IMPORT = "📥"
-
-
-INTERACTION_FAILED = f"{Icon.ERROR} Something went wrong. The error has been reported."
+INTERACTION_FAILED = "Something went wrong. The error has been reported."

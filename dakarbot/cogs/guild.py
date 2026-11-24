@@ -34,7 +34,7 @@ import discord
 
 from ..bot import DakarBot, DakarCog
 from ..channel_settings import ChannelSettings
-from ..ui import Icon, LayoutView, format_list_or_inline
+from ..ui import LayoutView, format_list_or_inline
 
 VIEW_AUDIT_LOG_PERMS = discord.Permissions(view_audit_log=True)
 MANAGE_MESSAGES_PERMS = discord.Permissions(manage_messages=True)
@@ -76,19 +76,19 @@ LOCKABLE_CHANNEL_TYPES = (
 
 _LOCK_STRINGS = {
     "action": "locked",
-    "modal_title": f"{Icon.LOCK} Lock channels",
+    "modal_title": "Lock channels",
     "channels_description": "Select which channels you want to lock",
     "message_description": "Optional message to send in the locked channels",
-    "no_channels": f"{Icon.SEARCH} There are no channels to lock.",
-    "success": f"{Icon.SUCCESS} Successfully locked channels: ",
+    "no_channels": "There are no channels to lock.",
+    "success": "Successfully locked channels: ",
 }
 _UNLOCK_STRINGS = {
     "action": "unlocked",
-    "modal_title": f"{Icon.UNLOCK} Unlock channels",
+    "modal_title": "Unlock channels",
     "channels_description": "Select which channels you want to unlock",
     "message_description": "Optional message to send in the unlocked channels",
-    "no_channels": f"{Icon.SEARCH} There are no locked channels.",
-    "success": f"{Icon.SUCCESS} Successfully unlocked channels: ",
+    "no_channels": "There are no locked channels.",
+    "success": "Successfully unlocked channels: ",
 }
 
 
@@ -124,7 +124,7 @@ async def _lock_channel(
     await channel.set_permissions(everyone, overwrite=overwrite, reason="Channel locked")
     await channel_settings.set_lock(channel.guild.id, channel.id, lock_state)
 
-    text = f"{Icon.LOCK} **This channel has been locked**"
+    text = "**This channel has been locked**"
     if message:
         text += f"\n{message}"
     text += "\n-# You are not muted, this channel is locked for everyone. Please don't DM people."
@@ -150,7 +150,7 @@ async def _unlock_channel(
     await channel.set_permissions(everyone, overwrite=overwrite, reason="Channel unlocked")
     await channel_settings.set_lock(channel.guild.id, channel.id, {})
 
-    text = f"{Icon.UNLOCK} **This channel has been unlocked**"
+    text = "**This channel has been unlocked**"
     if message:
         text += f"\n{message}"
     try:
@@ -230,23 +230,23 @@ class GuildCog(DakarCog, name="Guild"):
 
         lines = []
         if guild.description:
-            lines.append(f"📝 **Description:** {guild.description}")
+            lines.append(f"**Description:** {guild.description}")
         lines += [
-            f"👑 **Owner:** {owner.mention}",
-            f"{Icon.ID} **Owner ID:** {owner.id}",
-            f"{Icon.CREATED} **Created:** <t:{int(guild.created_at.timestamp())}:F>",
-            f"{Icon.ID} **Guild ID:** {guild.id}",
+            f"**Owner:** {owner.mention}",
+            f"**Owner ID:** {owner.id}",
+            f"**Created:** <t:{int(guild.created_at.timestamp())}:F>",
+            f"**Guild ID:** {guild.id}",
         ]
         stats_lines = [
-            f"👥 **Members:** {guild.member_count}",
-            f"📊 **Member Limit:** {guild.max_members}",
-            f"✔️ **Verified:** {'Yes' if 'VERIFIED' in guild.features else 'No'}",
-            f"🤝 **Partnered:** {'Yes' if 'PARTNERED' in guild.features else 'No'}",
-            f"💎 **Premium Tier:** {guild.premium_tier}",
+            f"**Members:** {guild.member_count}",
+            f"**Member Limit:** {guild.max_members}",
+            f"**Verified:** {'Yes' if 'VERIFIED' in guild.features else 'No'}",
+            f"**Partnered:** {'Yes' if 'PARTNERED' in guild.features else 'No'}",
+            f"**Premium Tier:** {guild.premium_tier}",
         ]
-        features_text = "**✨ Features:**\n" + format_list_or_inline(sorted(guild.features))
+        features_text = "**Features:**\n" + format_list_or_inline(sorted(guild.features))
 
-        heading = discord.ui.TextDisplay(f"## {Icon.SERVER} {guild.name}")
+        heading = discord.ui.TextDisplay(f"## {guild.name}")
         if guild.icon:
             top = discord.ui.Section(heading, accessory=discord.ui.Thumbnail(url=guild.icon.url))
         else:
@@ -275,16 +275,16 @@ class GuildCog(DakarCog, name="Guild"):
             permissions_text = format_list_or_inline(granted)
 
         lines = [
-            f"{Icon.CREATED} **Created:** <t:{int(role.created_at.timestamp())}:F>",
-            f"⚙️ **Managed:** {'Yes' if role.managed else 'No'}",
-            f"📌 **Hoisted:** {'Yes' if role.hoist else 'No'}",
-            f"🎨 **Color:** {str(role.color)}",
+            f"**Created:** <t:{int(role.created_at.timestamp())}:F>",
+            f"**Managed:** {'Yes' if role.managed else 'No'}",
+            f"**Hoisted:** {'Yes' if role.hoist else 'No'}",
+            f"**Color:** {str(role.color)}",
         ]
         container = discord.ui.Container(
-            discord.ui.TextDisplay(f"## {Icon.ROLE} {role.name}"),
+            discord.ui.TextDisplay(f"## {role.name}"),
             discord.ui.TextDisplay("\n".join(lines)),
             discord.ui.Separator(),
-            discord.ui.TextDisplay(f"🔑 **Permissions:**\n{permissions_text}"),
+            discord.ui.TextDisplay(f"**Permissions:**\n{permissions_text}"),
             color=role.color if role.color.value else discord.Color.default(),
         )
         await ctx.respond(view=LayoutView(container))
@@ -319,7 +319,7 @@ class GuildCog(DakarCog, name="Guild"):
         lines += [f"{discord.utils.escape_markdown(u.display_name)}: {u.id}" for u in matched_bans]
 
         container = discord.ui.Container(
-            discord.ui.TextDisplay(f"## {Icon.SEARCH} {len(lines)} results for '{query}'"),
+            discord.ui.TextDisplay(f"## {len(lines)} results for '{query}'"),
             discord.ui.TextDisplay("\n".join(lines)),
             color=discord.Color.green(),
         )
@@ -346,12 +346,12 @@ class GuildCog(DakarCog, name="Guild"):
         if regex:
             match = _REGEX_LITERAL_RE.match(regex)
             if not match:
-                await ctx.respond(f"{Icon.ERROR} Invalid regex: `{regex}`", ephemeral=True)
+                await ctx.respond(f"Invalid regex: `{regex}`", ephemeral=True)
                 return
             try:
                 compiled_regex = re.compile(match.group(1), _compile_regex_flags(match.group(2)))
             except re.error:
-                await ctx.respond(f"{Icon.ERROR} Invalid regex: `{regex}`", ephemeral=True)
+                await ctx.respond(f"Invalid regex: `{regex}`", ephemeral=True)
                 return
 
         cutoff = discord.utils.utcnow() - datetime.timedelta(seconds=PURGE_MAX_AGE_SECONDS)
@@ -370,12 +370,12 @@ class GuildCog(DakarCog, name="Guild"):
 
         to_delete = [msg async for msg in ctx.channel.history(limit=limit) if matches(msg)]
         if not to_delete:
-            await ctx.respond(f"{Icon.SEARCH} No messages matched your filters.", ephemeral=True)
+            await ctx.respond("No messages matched your filters.", ephemeral=True)
             return
 
         await ctx.channel.delete_messages(to_delete)
         await self._log_purge(ctx, len(to_delete), limit, content, author, regex)
-        await ctx.respond(f"{Icon.DELETE} Deleted {len(to_delete)} messages!", ephemeral=True)
+        await ctx.respond(f"Deleted {len(to_delete)} messages.", ephemeral=True)
 
     @discord.slash_command(
         name="lock", description="Stop users from sending messages and adding reactions in one or more channels.",
@@ -442,7 +442,7 @@ class GuildCog(DakarCog, name="Guild"):
             lines.append(f"**Regex:** `{regex}`")
 
         container = discord.ui.Container(
-            discord.ui.TextDisplay(f"{Icon.DELETE} **{ctx.author.display_name} purged {count} messages**"),
+            discord.ui.TextDisplay(f"**{ctx.author.display_name} purged {count} messages**"),
             discord.ui.TextDisplay("\n".join(lines)),
             color=discord.Color.red(),
         )

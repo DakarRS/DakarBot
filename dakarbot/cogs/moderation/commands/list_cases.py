@@ -6,7 +6,7 @@ import discord
 
 from dakarbot.moderation import models
 from dakarbot.moderation.models import MODERATIONS_PER_PAGE, Moderation, ModerationTarget, describe_case_line
-from dakarbot.ui import Icon, LayoutView
+from dakarbot.ui import LayoutView
 
 if TYPE_CHECKING:
     from ..base import ModerationCog
@@ -30,11 +30,11 @@ class ModerationListView(LayoutView):
 
         self.header = discord.ui.TextDisplay(self._header_text())
         self.body = discord.ui.TextDisplay(self._body_text())
-        self.first_button = discord.ui.Button(label="First", emoji="⏮️", style=discord.ButtonStyle.secondary)
-        self.prev_button = discord.ui.Button(label="Prev", emoji="◀️", style=discord.ButtonStyle.secondary)
-        self.refresh_button = discord.ui.Button(label="Refresh", emoji=Icon.REFRESH, style=discord.ButtonStyle.secondary)
-        self.next_button = discord.ui.Button(label="Next", emoji="▶️", style=discord.ButtonStyle.secondary)
-        self.last_button = discord.ui.Button(label="Last", emoji="⏭️", style=discord.ButtonStyle.secondary)
+        self.first_button = discord.ui.Button(label="First", style=discord.ButtonStyle.secondary)
+        self.prev_button = discord.ui.Button(label="Prev", style=discord.ButtonStyle.secondary)
+        self.refresh_button = discord.ui.Button(label="Refresh", style=discord.ButtonStyle.secondary)
+        self.next_button = discord.ui.Button(label="Next", style=discord.ButtonStyle.secondary)
+        self.last_button = discord.ui.Button(label="Last", style=discord.ButtonStyle.secondary)
         self.first_button.callback = self._first
         self.prev_button.callback = self._prev
         self.refresh_button.callback = self._refresh
@@ -59,7 +59,7 @@ class ModerationListView(LayoutView):
         self.last_button.disabled = self.next_button.disabled = self.page == self.max_page
 
     def _header_text(self) -> str:
-        text = f"## {Icon.MODERATIONS} Moderations for {self.target}"
+        text = f"## Moderations for {self.target}"
         if self.moderations:
             text += f"\n-# Page {self.page + 1}/{self.max_page + 1}"
         return text

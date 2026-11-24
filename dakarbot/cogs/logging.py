@@ -32,7 +32,7 @@ import discord
 from discord.ext import commands
 
 from ..bot import DakarBot, DakarCog
-from ..ui import Icon, LayoutView
+from ..ui import LayoutView
 from ..moderation.models import ModeratedMember, ModerationAction, ModerationTarget
 
 logger = logging.getLogger("dakarbot.logging")
@@ -146,10 +146,10 @@ class LoggingCog(DakarCog, name="Logging"):
         channel_id = await self.guild_settings.get_join_log_channel_id(member.guild.id)
         details = f"User ID: {member.id}\nCreated Account: {discord.utils.format_dt(member.created_at, 'R')}"
         section = self._user_section(
-            member.display_avatar.url, f"📥 **{member.display_name} joined this server**", details
+            member.display_avatar.url, f"**{member.display_name} joined this server**", details
         )
         container = discord.ui.Container(
-            section, self._subtext(f"👥 Members: {member.guild.member_count}"), color=discord.Color.green()
+            section, self._subtext(f"Members: {member.guild.member_count}"), color=discord.Color.green()
         )
         await self._send_to(member.guild, channel_id, container)
 
@@ -160,10 +160,10 @@ class LoggingCog(DakarCog, name="Logging"):
         if member.joined_at:
             details += f"\nJoined: {discord.utils.format_dt(member.joined_at, 'R')}"
         section = self._user_section(
-            member.display_avatar.url, f"📤 **{member.display_name} left this server**", details
+            member.display_avatar.url, f"**{member.display_name} left this server**", details
         )
         container = discord.ui.Container(
-            section, self._subtext(f"👥 Members: {member.guild.member_count}"), color=discord.Color.red()
+            section, self._subtext(f"Members: {member.guild.member_count}"), color=discord.Color.red()
         )
         await self._send_to(member.guild, channel_id, container)
 
@@ -183,11 +183,11 @@ class LoggingCog(DakarCog, name="Logging"):
 
         section = self._user_section(
             before.author.display_avatar.url,
-            f"✏️ **Message by {before.author.display_name} in #{before.channel.name} was edited**",
+            f"**Message by {before.author.display_name} in #{before.channel.name} was edited**",
             word_diff(before.content, after.content),
         )
         container = discord.ui.Container(
-            section, self._subtext(f"{Icon.ID} User ID: {before.author.id}"), color=discord.Color.orange()
+            section, self._subtext(f"User ID: {before.author.id}"), color=discord.Color.orange()
         )
         await self._send_to(before.guild, channel_id, container)
 
@@ -206,15 +206,15 @@ class LoggingCog(DakarCog, name="Logging"):
             return
 
         if message.type is discord.MessageType.default:
-            texts = [f"🗑️ **Message by {message.author.display_name} in #{message.channel.name} was deleted**"]
+            texts = [f"**Message by {message.author.display_name} in #{message.channel.name} was deleted**"]
             if message.content:
                 texts.append(message.content[:4096])
             items = [self._user_section(message.author.display_avatar.url, *texts)]
         else:
-            items = [discord.ui.TextDisplay("🗑️ **A system message was deleted**")]
+            items = [discord.ui.TextDisplay("**A system message was deleted**")]
 
         files, missing = await self._attachments_to_files(message.attachments)
-        footer = f"{Icon.ID} User ID: {message.author.id}"
+        footer = f"User ID: {message.author.id}"
         if missing:
             footer += f" | Missing Attachments: {missing}"
         items.append(self._subtext(footer))
@@ -238,13 +238,13 @@ class LoggingCog(DakarCog, name="Logging"):
         if not channel_id:
             return
 
-        texts = [f"{Icon.WARNING} **Message by {message.author.display_name} in #{message.channel.name} was deleted**"]
+        texts = [f"**Message by {message.author.display_name} in #{message.channel.name} was deleted**"]
         if message.content:
             texts.append(message.content[:4096])
         items = [self._user_section(message.author.display_avatar.url, *texts)]
 
         files, missing = await self._attachments_to_files(message.attachments)
-        footer = f"📋 Reason: {reason} | {Icon.ID} User ID: {message.author.id}"
+        footer = f"Reason: {reason} · User ID: {message.author.id}"
         if missing:
             footer += f" | Missing Attachments: {missing}"
         items.append(self._subtext(footer))
@@ -299,11 +299,11 @@ class LoggingCog(DakarCog, name="Logging"):
 
         channel = messages[0].channel
         items = [
-            discord.ui.TextDisplay(f"🗑️ **{len(messages)} messages were deleted in #{channel.name}**"),
+            discord.ui.TextDisplay(f"**{len(messages)} messages were deleted in #{channel.name}**"),
             discord.ui.TextDisplay("\n".join(lines)),
         ]
         if truncated:
-            items.append(self._subtext("✂️ Some messages were omitted for length."))
+            items.append(self._subtext("Some messages were omitted for length."))
         container = discord.ui.Container(*items, color=discord.Color.red())
 
         all_attachments = [a for msg in messages for a in msg.attachments]
@@ -389,11 +389,11 @@ class LoggingCog(DakarCog, name="Logging"):
         if not channel_id:
             return
         container = discord.ui.Container(
-            discord.ui.TextDisplay("🧹 **Members Pruned**"),
+            discord.ui.TextDisplay("**Members Pruned**"),
             discord.ui.TextDisplay(
-                f"📅 Days: {entry.extra.delete_member_days}\n"
-                f"👋 Removed: {entry.extra.members_removed}\n"
-                f"👥 New member count: {guild.member_count}"
+                f"Days: {entry.extra.delete_member_days}\n"
+                f"Removed: {entry.extra.members_removed}\n"
+                f"New member count: {guild.member_count}"
             ),
             color=discord.Color.red(),
         )

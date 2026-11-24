@@ -17,12 +17,12 @@ async def run(cog: "ModerationCog", ctx: discord.ApplicationContext, id: int) ->
         await ctx.respond(f"No moderation with id #{id} found.", ephemeral=True)
         return
 
-    delete_button = discord.ui.Button(label="Delete", emoji="🗑️", style=discord.ButtonStyle.danger)
+    delete_button = discord.ui.Button(label="Delete", style=discord.ButtonStyle.danger)
 
     async def _delete(interaction: discord.Interaction) -> None:
         await models.delete(cog.db, ctx.guild.id, id)
         await interaction.response.edit_message(
-            view=LayoutView(discord.ui.TextDisplay(f"🗑️ Deleted moderation #{id}."))
+            view=LayoutView(discord.ui.TextDisplay(f"Deleted moderation #{id}."))
         )
 
     delete_button.callback = _delete

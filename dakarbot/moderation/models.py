@@ -264,7 +264,7 @@ async def get_recent_by_others(
     moderation confirmation prompt."""
     action_placeholders = ", ".join(f"${i + 5}" for i in range(len(DUPLICATE_TRIGGER_ACTIONS)))
     rows = await db.fetchall(
-        f"""
+        """
         SELECT * FROM moderations
         WHERE guild_id = $1 AND user_id = $2 AND created >= $3
           AND (moderator IS NULL OR moderator != $4)
@@ -401,33 +401,11 @@ def resolve_action_color(action: ModerationAction) -> discord.Color:
     return _ACTION_COLORS.get(action, discord.Color.blue())
 
 
-# Plain unicode stand-ins for modbot's config.data.emoji.* custom emoji (ban/kick/
-# mute/strike/pardon icons referenced throughout UserInfoCommand.js/UserActionEmbed
-# etc.) — this port has no custom-emoji config, so each action gets a sensible
-# unicode equivalent instead. See dakarbot/ui.py's Icon class for the same idea
-# applied to non-action-specific concepts.
-_ACTION_EMOJI: dict[ModerationAction, str] = {
-    ModerationAction.BAN: "🔨",
-    ModerationAction.UNBAN: "🔓",
-    ModerationAction.KICK: "👢",
-    ModerationAction.MUTE: "🔇",
-    ModerationAction.UNMUTE: "🔊",
-    ModerationAction.SOFTBAN: "🧹",
-    ModerationAction.STRIKE: "⚠️",
-    ModerationAction.PARDON: "🕊️",
-}
-
-
-def resolve_action_emoji(action: ModerationAction) -> str:
-    return _ACTION_EMOJI.get(action, "")
-
-
 def describe_case_line(moderation: Moderation) -> str:
     """One-line summary of a case: action, moderator, when, strike/pardon value,
     duration, and a truncated reason — used anywhere a case gets listed rather than
     shown on its own (the /moderation list pages, the duplicate-moderation warning)."""
-    emoji = resolve_action_emoji(moderation.action)
-    line = f"{emoji} **{moderation.action.value}** by <@{moderation.moderator}> <t:{moderation.created}:R>"
+    line = f"**{moderation.action.value}** by <@{moderation.moderator}> <t:{moderation.created}:R>"
     if moderation.action in (ModerationAction.STRIKE, ModerationAction.PARDON):
         line += f" ({moderation.value:+d})"
     if moderation.duration:
@@ -440,24 +418,22 @@ def describe_case_line(moderation: Moderation) -> str:
 
 def build_case_container(moderation: Moderation) -> discord.ui.Container:
     detail_lines = [
-        f"👤 **Moderator:** {f'<@{moderation.moderator}>' if moderation.moderator else 'Unknown'}",
-        f"📅 **Created:** <t:{moderation.created}:f>",
+        f"**Moderator:** {f'<@{moderation.moderator}>' if moderation.moderator else 'Unknown'}",
+        f"**Created:** <t:{moderation.created}:f>",
     ]
     if moderation.duration:
-        detail_lines.append(f"⏱️ **Duration:** {format_duration(moderation.duration)}")
+        detail_lines.append(f"**Duration:** {format_duration(moderation.duration)}")
     if moderation.action in (ModerationAction.STRIKE, ModerationAction.PARDON):
-        detail_lines.append(f"⚠️ **Value:** {moderation.value:+d}")
+        detail_lines.append(f"**Value:** {moderation.value:+d}")
     if moderation.comment:
-        detail_lines.append(f"📝 **Comment:** {moderation.comment}")
+        detail_lines.append(f"**Comment:** {moderation.comment}")
 
-    emoji = resolve_action_emoji(moderation.action)
-    status_icon = "🟢" if moderation.active else "⚪"
     return discord.ui.Container(
-        discord.ui.TextDisplay(f"## {emoji} Case #{moderation.id} — {moderation.action.value.upper()}"),
+        discord.ui.TextDisplay(f"## Case #{moderation.id} — {moderation.action.value.upper()}"),
         discord.ui.TextDisplay(f"<@{moderation.user_id}>\n{moderation.reason}"),
         discord.ui.Separator(),
         discord.ui.TextDisplay("\n".join(detail_lines)),
-        discord.ui.TextDisplay(f"-# {status_icon} " + ("Active" if moderation.active else "Inactive")),
+        discord.ui.TextDisplay("-# Active" if moderation.active else "-# Inactive"),
         color=resolve_action_color(moderation.action),
     )
 

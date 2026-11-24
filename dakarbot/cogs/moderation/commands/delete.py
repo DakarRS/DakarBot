@@ -17,7 +17,7 @@ async def run(cog: "ModerationCog", ctx: discord.ApplicationContext, id: int) ->
         return
     await models.delete(cog.db, ctx.guild.id, id)
     container = discord.ui.Container(
-        discord.ui.TextDisplay(f"## 🗑️ Deleted Case #{id} — {record.action.value.upper()}"),
+        discord.ui.TextDisplay(f"## Deleted Case #{id} — {record.action.value.upper()}"),
         color=discord.Color.red(),
     )
     await ctx.respond(view=LayoutView(container), ephemeral=True)

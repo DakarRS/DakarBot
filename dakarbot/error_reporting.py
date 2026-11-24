@@ -131,7 +131,7 @@ def _view(container: discord.ui.Container) -> discord.ui.BaseView:
 
 def build_report(report: Report) -> tuple[discord.ui.Container, Optional[discord.File]]:
     is_error = report.level >= logging.ERROR
-    title = "❌ Error" if is_error else "⚠️ Warning"
+    title = "Error" if is_error else "Warning"
     if report.traceback:
         title += f" — `{report.traceback.strip().splitlines()[-1][:120]}`"
 

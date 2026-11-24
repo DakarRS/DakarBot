@@ -37,7 +37,7 @@ MAX_DURATION_SECONDS = 10 * _YEAR
 
 class DurationTooLong(ValueError):
     def __init__(self) -> None:
-        super().__init__("❌ That duration is too long. The maximum is 10 years; leave it empty for permanent.")
+        super().__init__("That duration is too long. The maximum is 10 years; leave it empty for permanent.")
 
 
 _UNIT_PATTERN = re.compile(r"(?P<value>\d*\.?\d+)\s*(?P<unit>[A-Za-z]+)")

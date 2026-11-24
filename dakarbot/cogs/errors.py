@@ -13,7 +13,7 @@ from discord.ext import commands
 from ..bot import DakarBot, DakarCog
 from ..error_reporting import describe_interaction
 from ..moderation.duration import DurationTooLong
-from ..ui import INTERACTION_FAILED, Icon
+from ..ui import INTERACTION_FAILED
 
 logger = logging.getLogger("dakarbot.errors")
 
@@ -38,15 +38,15 @@ class ErrorsCog(DakarCog, name="Errors"):
             # Commands without their own ValueError handling (e.g. cooldown settings) land here.
             await self._reply(ctx, str(original))
         elif isinstance(error, commands.CommandOnCooldown):
-            await self._reply(ctx, f"⏳ Slow down! Try again in {error.retry_after:.0f}s.")
+            await self._reply(ctx, f"You're on cooldown. Try again in {error.retry_after:.0f}s.")
         elif isinstance(error, commands.BotMissingPermissions):
             missing = ", ".join(p.replace("_", " ").title() for p in error.missing_permissions)
-            await self._reply(ctx, f"{Icon.ERROR} I'm missing these permissions here: {missing}")
+            await self._reply(ctx, f"I'm missing these permissions here: {missing}")
             logger.warning("Missing permissions (%s) for %s", missing, _command_context(ctx))
         elif isinstance(error, (commands.CheckFailure, discord.CheckFailure)):
-            await self._reply(ctx, f"{Icon.ERROR} You can't use this command here.")
+            await self._reply(ctx, "You can't use this command here.")
         elif isinstance(original, discord.Forbidden):
-            await self._reply(ctx, f"{Icon.ERROR} I don't have permission to do that here.")
+            await self._reply(ctx, "I don't have permission to do that here.")
             logger.warning("Forbidden (%s) in %s", original.text or original.status, _command_context(ctx))
         else:
             await self._reply(ctx, INTERACTION_FAILED)
