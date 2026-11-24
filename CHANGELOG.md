@@ -8,15 +8,15 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## Unreleased
 
-### Added
-- User-app support: `/about`, `/emoji`, `/fox`, `/pokemon`, `/action`, `/avatar`,
-  `/suggest` and `/poll` can be added to your own account and used in DMs, group chats
-  and servers the bot isn't in. `/about` has an "Add to my apps" button for this.
+Nothing yet.
 
 ## 2026-11-24
 
 ### Added
 - This changelog.
+- User-app support: `/about`, `/emoji`, `/fox`, `/pokemon`, `/action`, `/avatar`,
+  `/suggest` and `/poll` can be added to your own account and used in DMs, group chats
+  and servers the bot isn't in. `/about` has an "Add to my apps" button for this.
 - `/about`: servers, users, uptime, latency, memory/CPU and versions, with Invite and
   Support links.
 - Icon button on `/server` to view the server icon at full size.
@@ -38,6 +38,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Changed
 - Cleaner, more professional messages: removed emoji from headings, labels, buttons
   and replies.
+
+### Fixed
+- `/action` GIFs from Tenor's old `media1.tenor.com` links showed "Image not found";
+  they now use `media.tenor.com`, existing ones are repaired on startup, and `/gifs add`
+  converts them automatically.
+- Removed five Imgur GIFs that Discord only showed as still images.
 
 ## 2026-11-17
 

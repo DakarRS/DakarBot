@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import re
 from dataclasses import dataclass
 from typing import Optional
 
@@ -8,8 +9,18 @@ import aiohttp
 
 from ..db import Database
 from .actions import ACTIONS
+from .seed_gifs import DROPPED_URLS
 
 URL_CHECK_TIMEOUT = aiohttp.ClientTimeout(total=10)
+
+# Discord's media proxy can't load Tenor's old media1 domain ("Image not found"); the
+# same files are served on media.tenor.com without the itemid query.
+_LEGACY_TENOR = re.compile(r"https://media1\.tenor\.com/(images/[0-9a-f]+/tenor\.gif)(?:\?itemid=\d+)?")
+
+
+def normalize_gif_url(url: str) -> str:
+    match = _LEGACY_TENOR.fullmatch(url.strip())
+    return f"https://media.tenor.com/{match.group(1)}" if match else url.strip()
 
 
 @dataclass(frozen=True)
@@ -50,9 +61,26 @@ class GifStore:
         if action not in ACTIONS:
             raise ValueError(f"Unknown action: {action}")
         row = await self._db.fetchone(
-            "INSERT INTO gifs (action, url) VALUES ($1, $2) ON CONFLICT DO NOTHING RETURNING *", action, url
+            "INSERT INTO gifs (action, url) VALUES ($1, $2) ON CONFLICT DO NOTHING RETURNING *",
+            action, normalize_gif_url(url),
         )
         return Gif(**row) if row else None
+
+    async def repair_legacy_urls(self) -> int:
+        """Rewrites rows still on media1.tenor.com, splitting any that hold several glued
+        links (one exorium entry was missing a comma), and deletes DROPPED_URLS. Returns
+        rows repaired."""
+        rows = await self._db.fetchall("SELECT * FROM gifs WHERE url LIKE 'https://media1.tenor.com/%'")
+        async with self._db.transaction() as conn:
+            dropped = await conn.execute("DELETE FROM gifs WHERE url = ANY($1::text[])", list(DROPPED_URLS))
+            for row in rows:
+                await conn.execute("DELETE FROM gifs WHERE id = $1", row["id"])
+                for match in _LEGACY_TENOR.finditer(row["url"]):
+                    await conn.execute(
+                        "INSERT INTO gifs (action, url) VALUES ($1, $2) ON CONFLICT DO NOTHING",
+                        row["action"], normalize_gif_url(match.group(0)),
+                    )
+        return len(rows) + int(dropped.split()[-1])
 
     async def remove(self, gif_id: int) -> bool:
         return await self._db.execute("DELETE FROM gifs WHERE id = $1", gif_id) > 0

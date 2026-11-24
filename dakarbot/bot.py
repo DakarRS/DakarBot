@@ -111,7 +111,9 @@ class DakarBot(commands.AutoShardedBot):
         self.channel_settings = ChannelSettings(self.db)
         self.blacklist = Blacklist(self.db)
         await self.blacklist.load()
-        await GifStore(self.db).seed_if_empty(SEED_GIFS)
+        gifs = GifStore(self.db)
+        await gifs.seed_if_empty(SEED_GIFS)
+        await gifs.repair_legacy_urls()
         self.http_session = aiohttp.ClientSession(headers={"User-Agent": "DakarBot (Discord bot)"})
         await super().start(token, reconnect=reconnect)
 

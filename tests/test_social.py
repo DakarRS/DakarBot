@@ -103,3 +103,65 @@ async def test_is_media_url_rejects_html_and_errors(fake_session):
 
 async def test_is_media_url_rejects_non_http(fake_session):
     assert await is_media_url(fake_session({}), "ftp://x/a.gif") is False
+
+
+OLD_TENOR = "https://media1.tenor.com/images/abc123/tenor.gif?itemid=42"
+NEW_TENOR = "https://media.tenor.com/images/abc123/tenor.gif"
+
+
+def test_normalize_rewrites_legacy_tenor_links():
+    from dakarbot.social.gifs import normalize_gif_url
+
+    assert normalize_gif_url(OLD_TENOR) == NEW_TENOR
+    assert normalize_gif_url(NEW_TENOR) == NEW_TENOR
+    assert normalize_gif_url("https://media.giphy.com/media/x/giphy.gif") == "https://media.giphy.com/media/x/giphy.gif"
+
+
+def test_seed_has_no_legacy_tenor_links():
+    urls = [u for v in SEED_GIFS.values() for u in v]
+    assert not any("media1.tenor.com" in u for u in urls)
+    assert all(u.count("https://") == 1 for u in urls)
+
+
+async def test_add_normalizes_legacy_tenor_links(db):
+    gif = await GifStore(db).add("hug", OLD_TENOR)
+    assert gif.url == NEW_TENOR
+
+
+async def test_repair_rewrites_and_splits_legacy_rows(db):
+    glued = "https://media1.tenor.com/images/aaa/tenor.gif?itemid=1https://media1.tenor.com/images/bbb/tenor.gif?itemid=2"
+    for action, url in [("hug", OLD_TENOR), ("rawr", glued), ("pat", "https://i.imgur.com/x.gif")]:
+        await db.execute("INSERT INTO gifs (action, url) VALUES ($1, $2)", action, url)
+
+    store = GifStore(db)
+    assert await store.repair_legacy_urls() == 2
+    assert await store.repair_legacy_urls() == 0  # idempotent
+    assert [g.url for g in await store.list("hug")] == [NEW_TENOR]
+    assert sorted(g.url for g in await store.list("rawr")) == [
+        "https://media.tenor.com/images/aaa/tenor.gif", "https://media.tenor.com/images/bbb/tenor.gif",
+    ]
+    assert [g.url for g in await store.list("pat")] == ["https://i.imgur.com/x.gif"]
+
+
+async def test_repair_drops_legacy_row_when_new_link_already_exists(db):
+    await db.execute("INSERT INTO gifs (action, url) VALUES ('hug', $1), ('hug', $2)", OLD_TENOR, NEW_TENOR)
+    await GifStore(db).repair_legacy_urls()
+    assert [g.url for g in await GifStore(db).list("hug")] == [NEW_TENOR]
+
+
+def test_seed_has_no_static_imgur_links():
+    from dakarbot.social.seed_gifs import DROPPED_URLS
+
+    urls = {u for v in SEED_GIFS.values() for u in v}
+    assert len(DROPPED_URLS) == 5
+    assert not urls & DROPPED_URLS
+
+
+async def test_repair_removes_dropped_links_only(db):
+    from dakarbot.social.seed_gifs import DROPPED_URLS
+
+    dropped = sorted(DROPPED_URLS)[0]
+    kept = "https://i.imgur.com/animated.gif"
+    await db.execute("INSERT INTO gifs (action, url) VALUES ('bellyrub', $1), ('bellyrub', $2)", dropped, kept)
+    assert await GifStore(db).repair_legacy_urls() == 1
+    assert [g.url for g in await GifStore(db).list("bellyrub")] == [kept]
