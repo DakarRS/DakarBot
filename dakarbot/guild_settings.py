@@ -16,7 +16,7 @@ import time
 from dataclasses import dataclass
 from typing import Any, Optional
 
-from .currency import DEFAULT_CURRENCY_NAME
+from .economy.balances import DEFAULT_CURRENCY_NAME
 from .db import Database
 from .moderation.models import DEFAULT_LADDER, Punishment, PunishmentAction
 

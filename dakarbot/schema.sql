@@ -112,3 +112,46 @@ CREATE TABLE IF NOT EXISTS suggestions (
     decision_reason TEXT NULL DEFAULT NULL,
     created         BIGINT NOT NULL
 );
+
+CREATE TABLE IF NOT EXISTS daily_claims (
+    guild_id   BIGINT NOT NULL,
+    user_id    BIGINT NOT NULL,
+    last_claim DATE NOT NULL,
+    streak     INT NOT NULL,
+    PRIMARY KEY (guild_id, user_id)
+);
+
+CREATE TABLE IF NOT EXISTS shop_items (
+    id          SERIAL PRIMARY KEY,
+    guild_id    BIGINT NOT NULL,
+    name        TEXT NOT NULL,
+    price       BIGINT NOT NULL CHECK (price > 0),
+    role_id     BIGINT NULL DEFAULT NULL,
+    description TEXT NULL DEFAULT NULL,
+    active      BOOLEAN NOT NULL DEFAULT TRUE
+);
+
+-- Removed items stay for inventories, so only active names need to be unique.
+CREATE UNIQUE INDEX IF NOT EXISTS shop_items_active_name
+    ON shop_items (guild_id, lower(name)) WHERE active;
+
+CREATE TABLE IF NOT EXISTS purchases (
+    id       SERIAL PRIMARY KEY,
+    guild_id BIGINT NOT NULL,
+    user_id  BIGINT NOT NULL,
+    item_id  INT NOT NULL REFERENCES shop_items (id),
+    price    BIGINT NOT NULL,
+    created  BIGINT NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS purchases_guild_user ON purchases (guild_id, user_id);
+
+CREATE TABLE IF NOT EXISTS action_counts (
+    from_id BIGINT NOT NULL,
+    to_id   BIGINT NOT NULL,
+    action  VARCHAR(20) NOT NULL,
+    count   INT NOT NULL,
+    PRIMARY KEY (from_id, to_id, action)
+);
+
+CREATE INDEX IF NOT EXISTS action_counts_to_id ON action_counts (to_id);

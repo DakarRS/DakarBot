@@ -2,7 +2,7 @@ import random
 
 import pytest
 
-from dakarbot.currency import (
+from dakarbot.economy.balances import (
     Balances,
     InsufficientFunds,
     PaymentError,

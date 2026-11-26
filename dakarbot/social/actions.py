@@ -15,6 +15,8 @@ class Action:
     name: str
     # "{a}" and "{t}" are the author and target names, already bolded.
     targeted: str
+    # Footer for repeat counts: plain names plus "{n}" ("once", "twice", "3 times").
+    tally: str
     solo: Optional[str] = None  # set when the target is optional
 
     @property
@@ -22,29 +24,45 @@ class Action:
         return self.solo is None
 
 
-def _feeling(name: str, text: str) -> Action:
-    return Action(name, targeted=f"{{a}} {text} because of {{t}}", solo=f"{{a}} {text}")
+def _done(name: str, verb: str) -> Action:
+    return Action(name, targeted=f"{{a}} {verb} {{t}}", tally=f"{{a}} has {verb} {{t}} {{n}}")
+
+
+def _feeling(name: str, text: str, base: str) -> Action:
+    return Action(
+        name, targeted=f"{{a}} {text} because of {{t}}", solo=f"{{a}} {text}",
+        tally=f"{{t}} has made {{a}} {base} {{n}}",
+    )
 
 
 ACTIONS: dict[str, Action] = {
     a.name: a
     for a in (
-        Action("hug", "{a} hugged {t}"),
-        Action("bonk", "{a} bonked {t}"),
-        Action("boop", "{a} booped {t}"),
-        Action("kiss", "{a} kissed {t}"),
-        Action("lick", "{a} licked {t}"),
-        Action("bellyrub", "{a} gave {t} bellyrubs"),
-        Action("cuddle", "{a} cuddled {t}"),
-        Action("highfive", "{a} high-fived {t}"),
-        Action("rawr", "{a} rawred at {t}"),
-        Action("howl", "{a} howled at {t}. Awoo!", solo="{a} howls. Awoo!"),
-        Action("pat", "{a} patted {t}"),
-        _feeling("blush", "blushes"),
-        _feeling("happy", "is happy"),
-        _feeling("wag", "wags their tail"),
+        _done("hug", "hugged"),
+        _done("bonk", "bonked"),
+        _done("boop", "booped"),
+        _done("kiss", "kissed"),
+        _done("lick", "licked"),
+        Action("bellyrub", "{a} gave {t} bellyrubs", tally="{a} has given {t} bellyrubs {n}"),
+        _done("cuddle", "cuddled"),
+        _done("highfive", "high-fived"),
+        _done("rawr", "rawred at"),
+        Action("howl", "{a} howled at {t}. Awoo!", tally="{a} has howled at {t} {n}", solo="{a} howls. Awoo!"),
+        _done("pat", "patted"),
+        _feeling("blush", "blushes", "blush"),
+        _feeling("happy", "is happy", "happy"),
+        _feeling("wag", "wags their tail", "wag their tail"),
     )
 }
+
+
+def _times(count: int) -> str:
+    return {1: "once", 2: "twice"}.get(count, f"{count} times")
+
+
+def tally(action: Action, author: str, target: str, count: int) -> str:
+    esc = discord.utils.escape_markdown
+    return action.tally.format(a=esc(author), t=esc(target), n=_times(count))
 
 
 def _bold(name: str) -> str:

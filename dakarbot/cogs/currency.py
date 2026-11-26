@@ -1,7 +1,6 @@
-"""Per-server currency, ported from exorium: /balance, /balance-reset, /work, /pay and
+"""Per-server currency, ported from exorium: /balance, /balance-reset, /work, /daily, /pay and
 the admin /currency group. Discord won't let /balance be both a command and a group,
 which is why reset is /balance-reset rather than /balance reset."""
-import logging
 import random
 from typing import Optional
 
@@ -9,7 +8,7 @@ import discord
 from discord.ext import commands
 
 from ..bot import DakarBot, DakarCog
-from ..currency import (
+from ..economy.balances import (
     MAX_BALANCE,
     WORK_COOLDOWN_SECONDS,
     Balances,
@@ -18,16 +17,12 @@ from ..currency import (
     roll_work,
     validate_payment,
 )
-from ..ui import ConfirmView, LayoutView
-
-logger = logging.getLogger("dakarbot.currency")
+from ..economy.daily import DAILY_MAX_STREAK, AlreadyClaimed, Daily, daily_reward, next_claim_at, utc_today
+from ..ui import ConfirmView
+from ._economy import log_change, panel
 
 MANAGE_GUILD = discord.Permissions(manage_guild=True)
 _rng = random.SystemRandom()
-
-
-def _panel(text: str, color: discord.Color) -> LayoutView:
-    return LayoutView(discord.ui.Container(discord.ui.TextDisplay(text), color=color))
 
 
 class CurrencyCog(DakarCog, name="Currency"):
@@ -38,29 +33,9 @@ class CurrencyCog(DakarCog, name="Currency"):
     async def _name(self, guild_id: int) -> str:
         return await self.guild_settings.get_currency_name(guild_id)
 
-    async def log_change(
-        self, guild: discord.Guild, title: str, actor: discord.abc.User, target: discord.abc.User,
-        change: Optional[int], new_balance: int,
-    ) -> None:
-        channel_id = await self.guild_settings.get_currency_log_channel_id(guild.id)
-        channel = guild.get_channel(channel_id) if channel_id else None
-        if channel is None:
-            return
-        name = await self._name(guild.id)
-        lines = [f"**Member:** {target.mention} (`{target.id}`)"]
-        if change is not None:
-            lines.append(f"**Change:** {change:+,} {name}")
-        lines.append(f"**New balance:** {new_balance:,} {name}")
-        container = discord.ui.Container(
-            discord.ui.TextDisplay(f"**{title}**"),
-            discord.ui.TextDisplay("\n".join(lines)),
-            discord.ui.TextDisplay(f"-# By {actor.mention} (`{actor.id}`)"),
-            color=discord.Color.gold(),
-        )
-        try:
-            await channel.send(view=LayoutView(container), allowed_mentions=discord.AllowedMentions.none())
-        except discord.HTTPException:
-            logger.warning("Couldn't post to currency log channel %s in guild %s", channel_id, guild.id)
+    async def log_change(self, guild: discord.Guild, title: str, actor: discord.abc.User,
+                         target: discord.abc.User, change: Optional[int], new_balance: int) -> None:
+        await log_change(self.guild_settings, guild, title, actor, target, change, new_balance)
 
     @discord.slash_command(name="balance", description="Show your balance, or someone else's.")
     @commands.guild_only()
@@ -75,7 +50,7 @@ class CurrencyCog(DakarCog, name="Currency"):
         name = await self._name(ctx.guild.id)
         heading = "Your balance" if member == ctx.author else f"{member.display_name}'s balance"
         text = f"## {discord.utils.escape_markdown(heading)}\n**{amount:,}** {name}"
-        await ctx.respond(view=_panel(text, discord.Color.green()))
+        await ctx.respond(view=panel(text, discord.Color.green()))
 
     @discord.slash_command(name="balance-reset", description="Reset your balance in this server to 0.")
     @commands.guild_only()
@@ -114,9 +89,31 @@ class CurrencyCog(DakarCog, name="Currency"):
         else:
             text, color = "You broke a machine, but you had nothing for your boss to charge.", discord.Color.red()
         text += f"\n-# Balance: {new_balance:,} {name}"
-        await ctx.respond(view=_panel(text, color))
+        await ctx.respond(view=panel(text, color))
         if change:
             await self.log_change(ctx.guild, "Work", self.bot.user, ctx.author, change, new_balance)
+
+    @discord.slash_command(name="daily", description="Claim your daily reward. Come back every day for a streak.")
+    @commands.guild_only()
+    @commands.cooldown(1, 3, commands.BucketType.member)
+    async def daily(self, ctx: discord.ApplicationContext) -> None:
+        today = utc_today()
+        name = await self._name(ctx.guild.id)
+        try:
+            claim = await Daily(self.db).claim(ctx.guild.id, ctx.author.id, today)
+        except AlreadyClaimed:
+            next_at = discord.utils.format_dt(next_claim_at(today), "R")
+            await ctx.respond(f"You've already claimed today. Your next daily is ready {next_at}.", ephemeral=True)
+            return
+        lines = [f"## Daily reward\nYou got **{claim.reward:,}** {name}."]
+        if claim.streak > 1:
+            lines.append(f"**Streak:** {claim.streak} days")
+        if claim.streak < DAILY_MAX_STREAK:
+            lines.append(f"-# Come back tomorrow for {daily_reward(claim.streak + 1):,}.")
+        lines.append(f"-# Balance: {claim.balance:,} {name}")
+        await ctx.respond(view=panel("\n".join(lines), discord.Color.green()))
+        if claim.reward:
+            await self.log_change(ctx.guild, "Daily", self.bot.user, ctx.author, claim.reward, claim.balance)
 
     @discord.slash_command(name="pay", description="Pay another member from your balance.")
     @commands.guild_only()
@@ -135,7 +132,7 @@ class CurrencyCog(DakarCog, name="Currency"):
             await ctx.respond(str(error), ephemeral=True)
             return
         text = f"You paid {member.mention} **{amount:,}** {name}.\n-# Your balance: {payer_balance:,} {name}"
-        await ctx.respond(view=_panel(text, discord.Color.green()))
+        await ctx.respond(view=panel(text, discord.Color.green()))
         await self.log_change(ctx.guild, "Payment", ctx.author, member, amount, payee_balance)
 
     currency = discord.SlashCommandGroup(

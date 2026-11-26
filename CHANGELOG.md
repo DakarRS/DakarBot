@@ -8,7 +8,19 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## Unreleased
 
-Nothing yet.
+### Added
+- `/daily`: claim a reward once per UTC day. It starts at 200 and grows by 50 for each
+  day in a row, up to 500 on a 7-day streak. Missing a day resets the streak.
+- Shop: `/shop` lists what's for sale, `/buy` buys it and `/inventory` shows what you
+  own. Admins manage it with `/shop-admin add|remove` (Manage Server). Items either give
+  a role or are collectibles that stack. If the bot can't give the role, you aren't
+  charged. Roles with moderation or admin permissions can't be sold. Purchases go to
+  the currency log.
+- `/leaderboard`: the server's richest members and longest active daily streaks, plus
+  your own rank.
+- `/action` counts: actions toward someone now show a running tally, like "Alice has
+  hugged Bob 14 times". `/action-stats` shows the actions someone gives and gets most.
+  Counts are kept across all servers and DMs.
 
 ## 2026-11-24
 

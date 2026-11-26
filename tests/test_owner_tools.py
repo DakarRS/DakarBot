@@ -2,7 +2,7 @@ import asyncpg
 import pytest
 
 from dakarbot.blacklist import Blacklist, BlacklistKind
-from dakarbot.currency import Balances
+from dakarbot.economy.balances import Balances
 from dakarbot.readonly_sql import QueryRejected, check_query, format_result, run_readonly
 
 

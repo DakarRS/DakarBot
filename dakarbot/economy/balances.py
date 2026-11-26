@@ -7,7 +7,9 @@ import random
 from dataclasses import dataclass
 from enum import Enum
 
-from .db import Database
+import asyncpg
+
+from ..db import Database
 
 DEFAULT_CURRENCY_NAME = "coins"
 WORK_EARN_RANGE = (100, 500)
@@ -62,6 +64,29 @@ _ADD_SQL = (
 )
 
 
+async def credit(conn: asyncpg.Connection, guild_id: int, user_id: int, amount: int) -> tuple[int, int]:
+    """Adds up to `amount` without passing MAX_BALANCE. Returns (actual change, new balance)."""
+    current = await conn.fetchval(
+        "SELECT amount FROM balances WHERE guild_id = $1 AND user_id = $2 FOR UPDATE", guild_id, user_id
+    ) or 0
+    change = min(amount, MAX_BALANCE - current)
+    if change <= 0:
+        return 0, current
+    return change, await conn.fetchval(_ADD_SQL, guild_id, user_id, change)
+
+
+async def debit(conn: asyncpg.Connection, guild_id: int, user_id: int, amount: int) -> int:
+    """Takes exactly `amount` or raises InsufficientFunds. Returns the new balance."""
+    balance = await conn.fetchval(
+        "UPDATE balances SET amount = amount - $3"
+        " WHERE guild_id = $1 AND user_id = $2 AND amount >= $3 RETURNING amount",
+        guild_id, user_id, amount,
+    )
+    if balance is None:
+        raise InsufficientFunds("You don't have enough for that.")
+    return balance
+
+
 class Balances:
     def __init__(self, db: Database):
         self._db = db
@@ -90,39 +115,24 @@ class Balances:
     async def apply_work(self, guild_id: int, user_id: int, outcome: WorkOutcome) -> tuple[int, int]:
         """Returns (actual change, new balance); a loss is capped at what the user has."""
         async with self._db.transaction() as conn:
+            if outcome.result is WorkResult.EARNED:
+                return await credit(conn, guild_id, user_id, outcome.amount)
             current = await conn.fetchval(
                 "SELECT amount FROM balances WHERE guild_id = $1 AND user_id = $2 FOR UPDATE",
                 guild_id, user_id,
             ) or 0
-            if outcome.result is WorkResult.EARNED:
-                change = min(outcome.amount, MAX_BALANCE - current)
-            elif outcome.result is WorkResult.LOST:
-                change = -min(outcome.amount, current)
-            else:
-                change = 0
-            if change == 0:
+            loss = min(outcome.amount, current) if outcome.result is WorkResult.LOST else 0
+            if loss == 0:
                 return 0, current
-            if change < 0:
-                # The CHECK applies to an upsert's insert row before it merges, so losses
-                # (which only happen when a row exists) update in place.
-                new = await conn.fetchval(
-                    "UPDATE balances SET amount = amount + $3 WHERE guild_id = $1 AND user_id = $2 RETURNING amount",
-                    guild_id, user_id, change,
-                )
-            else:
-                new = await conn.fetchval(_ADD_SQL, guild_id, user_id, change)
-            return change, new
+            return -loss, await debit(conn, guild_id, user_id, loss)
 
     async def transfer(self, guild_id: int, payer_id: int, payee_id: int, amount: int) -> tuple[int, int]:
         """Returns (payer's new balance, payee's new balance)."""
         async with self._db.transaction() as conn:
-            payer_balance = await conn.fetchval(
-                "UPDATE balances SET amount = amount - $3"
-                " WHERE guild_id = $1 AND user_id = $2 AND amount >= $3 RETURNING amount",
-                guild_id, payer_id, amount,
-            )
-            if payer_balance is None:
-                raise InsufficientFunds("You don't have enough to pay that much.")
+            try:
+                payer_balance = await debit(conn, guild_id, payer_id, amount)
+            except InsufficientFunds:
+                raise InsufficientFunds("You don't have enough to pay that much.") from None
             payee_balance = await conn.fetchval(_ADD_SQL, guild_id, payee_id, amount)
             if payee_balance > MAX_BALANCE:
                 raise PaymentError("That would put them over the maximum balance.")

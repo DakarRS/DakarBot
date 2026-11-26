@@ -4,7 +4,8 @@ import discord
 from discord.ext import commands
 
 from ..bot import EVERYWHERE, DakarBot, DakarCog
-from ..social.actions import ACTIONS, ActionError, describe
+from ..social.actions import ACTIONS, ActionError, describe, tally
+from ..social.counts import ActionCounts
 from ..social.gifs import GifStore, is_media_url
 from ..ui import LayoutView
 
@@ -38,7 +39,43 @@ class SocialCog(DakarCog, name="Social"):
         url = await self.gifs.random_url(action.name)
         if url:
             items.append(discord.ui.MediaGallery(discord.MediaGalleryItem(url)))
+        # Solo actions and doing it to yourself aren't counted.
+        if member is not None and member.id != ctx.author.id:
+            count = await ActionCounts(self.db).record(action.name, ctx.author.id, member.id)
+            items.append(discord.ui.TextDisplay(
+                f"-# {tally(action, ctx.author.display_name, member.display_name, count)}"
+            ))
         await ctx.respond(view=LayoutView(discord.ui.Container(*items, color=discord.Color.blurple())))
+
+    @discord.slash_command(name="action-stats", description="See whose actions someone gives and gets most.",
+                           **EVERYWHERE)
+    @commands.cooldown(1, 5, commands.BucketType.user)
+    async def action_stats(
+        self,
+        ctx: discord.ApplicationContext,
+        user: discord.Option(discord.User, description="Whose stats to show", required=False, default=None),
+    ) -> None:
+        user = user or ctx.author
+        stats = await ActionCounts(self.db).stats(user.id)
+        whose = "Your" if user == ctx.author else f"{user.display_name}'s"
+        heading = f"## {discord.utils.escape_markdown(whose)} action stats"
+        if not stats.total_given and not stats.total_received:
+            await ctx.respond(view=LayoutView(discord.ui.Container(
+                discord.ui.TextDisplay(f"{heading}\nNo actions yet. Try /action."), color=discord.Color.blurple(),
+            )))
+            return
+
+        def section(title: str, pairs: list[tuple[str, int]], total: int) -> str:
+            rows = "\n".join(f"**{name}** x{count:,}" for name, count in pairs) or "None yet"
+            return f"### {title} ({total:,})\n{rows}"
+
+        container = discord.ui.Container(
+            discord.ui.TextDisplay(heading),
+            discord.ui.TextDisplay(section("Given", stats.given, stats.total_given)),
+            discord.ui.TextDisplay(section("Received", stats.received, stats.total_received)),
+            color=discord.Color.blurple(),
+        )
+        await ctx.respond(view=LayoutView(container))
 
     gifs_group = discord.SlashCommandGroup(
         "gifs", "Manage the GIFs used by /action.", default_member_permissions=ADMINISTRATOR
