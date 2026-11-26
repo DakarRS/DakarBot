@@ -8,7 +8,20 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## Unreleased
 
+Nothing yet.
+
+## 2026-11-26
+
 ### Added
+- `/profile`: your balance, level, daily streak, favorite action and item count on one
+  card, with server ranks.
+- `/trivia`: a multiple-choice question from Open Trivia DB with answer buttons and 20
+  seconds to answer. A correct answer pays 50, 100 or 150 depending on difficulty.
+  Works as a user app too, but only pays out in servers the bot is in.
+- `/remind in|list|cancel`: reminders from a minute to 10 years away, up to 25 each.
+  They arrive by DM, or in the channel you set them in if your DMs are closed.
+  Reminders that came due while the bot was down are sent when it's back. Works as a
+  user app too.
 - `/coinflip`: call heads or tails, and a correct call doubles your bet.
 - `/slots`: three reels. Three of a kind pays 5x to 100x, and two Cherries pay 1.5x.
 - `/blackjack`: Hit, Stand and Double buttons. The dealer stands on 17, and a natural
@@ -19,10 +32,6 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   you pay them a fine. One try an hour. It's off until an admin turns it on with
   `/currency rob`.
 - Bets in games that were cut short by a restart are refunded when the bot starts.
-
-## 2026-11-26
-
-### Added
 - Leveling: chatting earns 15-25 XP, at most once a minute. Each new highest level pays
   100 × the level in currency, and admins can attach a role to any level with
   `/levels-admin reward-set`. `/rank` shows your level and progress, and `/leaderboard`
@@ -43,6 +52,9 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - `/action` counts: actions toward someone now show a running tally, like "Alice has
   hugged Bob 14 times". `/action-stats` shows the actions someone gives and gets most.
   Counts are kept across all servers and DMs.
+
+### Fixed
+- `/rob` crashed instead of saying when you could try again.
 
 ## 2026-11-24
 

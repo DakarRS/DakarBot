@@ -107,6 +107,11 @@ class Balances:
         )
         return amount
 
+    async def add(self, guild_id: int, user_id: int, amount: int) -> tuple[int, int]:
+        """Returns (actual change, new balance), capped at MAX_BALANCE."""
+        async with self._db.transaction() as conn:
+            return await credit(conn, guild_id, user_id, amount)
+
     async def reset(self, guild_id: int, user_id: int) -> None:
         await self._db.execute(
             "DELETE FROM balances WHERE guild_id = $1 AND user_id = $2", guild_id, user_id

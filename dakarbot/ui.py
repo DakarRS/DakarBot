@@ -27,6 +27,7 @@ Two things confirmed by inspecting pycord's own implementation before relying on
 """
 
 import logging
+from datetime import datetime, timezone
 from typing import Awaitable, Callable, Optional, Sequence
 
 import discord
@@ -136,3 +137,8 @@ def format_list_or_inline(items: Sequence[str], threshold: int = 3) -> str:
 
 
 INTERACTION_FAILED = "Something went wrong. The error has been reported."
+
+
+def timestamp(unix: int, style: str = "R") -> str:
+    """A Discord timestamp tag (shown in each viewer's own time zone) for a Unix time."""
+    return discord.utils.format_dt(datetime.fromtimestamp(unix, timezone.utc), style)

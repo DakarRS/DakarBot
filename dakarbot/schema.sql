@@ -191,3 +191,15 @@ CREATE TABLE IF NOT EXISTS rob_cooldowns (
     last_attempt BIGINT NOT NULL,
     PRIMARY KEY (guild_id, user_id)
 );
+
+CREATE TABLE IF NOT EXISTS reminders (
+    id         SERIAL PRIMARY KEY,
+    user_id    BIGINT NOT NULL,
+    channel_id BIGINT NULL DEFAULT NULL,
+    due        BIGINT NOT NULL,
+    text       TEXT NOT NULL,
+    created    BIGINT NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS reminders_due ON reminders (due);
+CREATE INDEX IF NOT EXISTS reminders_user_id ON reminders (user_id);

@@ -10,7 +10,7 @@ from discord.ext import commands
 from ..blacklist import BlacklistKind
 from ..bot import DakarBot, DakarCog
 from ..economy.leaderboard import levels as level_ranking
-from ..leveling.curve import progress, roll_xp
+from ..leveling.curve import progress, progress_bar, roll_xp
 from ..leveling.levels import MAX_REWARD_LEVEL, XP_PER_COIN, Award, LevelError, Levels
 from ..ui import ConfirmView
 from ._economy import log_change, panel, role_problem
@@ -19,13 +19,7 @@ logger = logging.getLogger("dakarbot.leveling")
 
 MANAGE_GUILD = discord.Permissions(manage_guild=True)
 NO_MENTIONS = discord.AllowedMentions.none()
-BAR_WIDTH = 12
 _rng = random.SystemRandom()
-
-
-def progress_bar(done: int, total: int, width: int = BAR_WIDTH) -> str:
-    filled = min(width, done * width // total) if total else width
-    return "█" * filled + "░" * (width - filled)
 
 
 class LevelingCog(DakarCog, name="Leveling"):

@@ -4,6 +4,7 @@ from __future__ import annotations
 import random
 
 XP_RANGE = (15, 25)
+BAR_WIDTH = 12
 
 
 def xp_for_next(level: int) -> int:
@@ -29,3 +30,8 @@ def roll_xp(rng: random.Random) -> int:
 
 def level_label(xp: int) -> str:
     return f"Level {level_for_xp(xp)} ({xp:,} XP)"
+
+
+def progress_bar(done: int, total: int, width: int = BAR_WIDTH) -> str:
+    filled = min(width, done * width // total) if total else width
+    return "█" * filled + "░" * (width - filled)

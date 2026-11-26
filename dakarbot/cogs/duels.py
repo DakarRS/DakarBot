@@ -12,7 +12,7 @@ from ..economy.balances import PaymentError
 from ..games.rob import RobCooldown, RobError, Robberies, roll_rob
 from ..games.rps import CHOICES, rps_payouts
 from ..games.wagers import BetError, Wagers
-from ..ui import LayoutView
+from ..ui import LayoutView, timestamp
 from ._economy import bet_option, log_change, panel
 
 # Resets on every button press, so it covers both answering and picking.
@@ -193,8 +193,7 @@ class DuelsCog(DakarCog, name="Duels"):
             result = await Robberies(self.db).attempt(ctx.guild.id, ctx.author.id, member.id, int(time.time()),
                                                       roll_rob(_rng))
         except RobCooldown as cooldown:
-            when = discord.utils.format_dt(discord.utils.utcfromtimestamp(cooldown.retry_at), "R")
-            await ctx.respond(f"{cooldown} You can try again {when}.", ephemeral=True)
+            await ctx.respond(f"{cooldown} You can try again {timestamp(cooldown.retry_at)}.", ephemeral=True)
             return
         except RobError as error:
             await ctx.respond(str(error), ephemeral=True)

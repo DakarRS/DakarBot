@@ -4,8 +4,9 @@ import random
 import pytest
 
 from dakarbot.economy.balances import MAX_BALANCE, Balances
-from dakarbot.cogs.leveling import progress_bar
-from dakarbot.leveling.curve import XP_RANGE, level_for_xp, level_label, progress, roll_xp, xp_for_next
+from dakarbot.leveling.curve import (
+    XP_RANGE, level_for_xp, level_label, progress, progress_bar, roll_xp, xp_for_next,
+)
 from dakarbot.leveling.levels import AWARD_COOLDOWN_SECONDS, LevelError, Levels, level_up_payout
 
 GUILD, OTHER_GUILD = 1, 2
