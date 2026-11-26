@@ -1,34 +1,15 @@
 """/shop, /buy, /inventory and the admin /shop-admin group. /shop can't also be the
 admin group: a group's permissions apply to all of its subcommands."""
-from typing import Optional
-
 import discord
 from discord.ext import commands
 
 from ..bot import DakarBot, DakarCog
 from ..economy.balances import MAX_BALANCE, PaymentError
 from ..economy.shop import MAX_DESCRIPTION_LENGTH, MAX_NAME_LENGTH, Shop, ShopError, ShopItem
-from ._economy import log_change, panel
+from ._economy import log_change, panel, role_problem
 
 MANAGE_GUILD = discord.Permissions(manage_guild=True)
-# Selling these would let anyone with enough coins moderate or run the server.
-UNSELLABLE_PERMISSIONS = discord.Permissions(
-    administrator=True, manage_guild=True, manage_roles=True, manage_channels=True, manage_messages=True,
-    manage_webhooks=True, ban_members=True, kick_members=True, moderate_members=True, mention_everyone=True,
-)
 NO_MENTIONS = discord.AllowedMentions.none()
-
-
-def _role_problem(role: discord.Role, author: discord.Member) -> Optional[str]:
-    if role.is_default() or role.managed:
-        return "That role can't be given out."
-    if role.permissions.value & UNSELLABLE_PERMISSIONS.value:
-        return "That role has moderation or admin permissions, so it can't be sold."
-    if role >= role.guild.me.top_role:
-        return "That role is above mine, so I can't give it out. Move my role higher first."
-    if author != role.guild.owner and role >= author.top_role:
-        return "You can only sell roles below your own highest role."
-    return None
 
 
 def _describe(item: ShopItem) -> str:
@@ -141,7 +122,7 @@ class ShopCog(DakarCog, name="Shop"):
         description: discord.Option(str, description="Shown in the shop", required=False, default=None,
                                     max_length=MAX_DESCRIPTION_LENGTH),
     ) -> None:
-        if role is not None and (problem := _role_problem(role, ctx.author)):
+        if role is not None and (problem := role_problem(role, ctx.author)):
             await ctx.respond(problem, ephemeral=True)
             return
         try:

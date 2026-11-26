@@ -3,7 +3,8 @@ from datetime import date, timedelta
 from dakarbot.economy.balances import Balances
 from dakarbot.economy.daily import Daily
 from dakarbot.cogs.leaderboard import render
-from dakarbot.economy.leaderboard import Entry, Ranking, richest, streaks
+from dakarbot.economy.leaderboard import Entry, Ranking, levels, richest, streaks
+from dakarbot.leveling.levels import Levels
 
 GUILD, OTHER_GUILD = 1, 2
 DAY = date(2026, 11, 26)
@@ -84,3 +85,12 @@ def test_render_appends_caller_outside_top():
 
 def test_render_empty_board():
     assert render("Richest", Ranking([], None), _unit, caller_id=6) == "## Richest\nNobody's on the board yet."
+
+
+async def test_levels_rank_by_xp_in_this_guild(db):
+    store = Levels(db)
+    await store.award(GUILD, 1, 50, 0)
+    await store.award(GUILD, 2, 300, 0)
+    await store.award(OTHER_GUILD, 3, 900, 0)
+    ranking = await levels(db, GUILD, caller_id=1)
+    assert ranking.top == [Entry(1, 2, 300), Entry(2, 1, 50)]

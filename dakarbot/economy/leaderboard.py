@@ -55,3 +55,10 @@ async def streaks(
         "SELECT user_id, streak AS value FROM daily_claims WHERE guild_id = $1 AND last_claim >= $2",
         (guild_id, today - timedelta(days=1)), caller_id, limit,
     )
+
+
+async def levels(db: Database, guild_id: int, caller_id: int, limit: int = DEFAULT_LIMIT) -> Ranking:
+    """Ranked by total XP; the value is XP, so callers convert it to a level."""
+    return await _rank(
+        db, "SELECT user_id, xp AS value FROM levels WHERE guild_id = $1", (guild_id,), caller_id, limit
+    )

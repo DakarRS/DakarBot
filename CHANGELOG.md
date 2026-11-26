@@ -9,6 +9,18 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## Unreleased
 
 ### Added
+- Leveling: chatting earns 15-25 XP, at most once a minute. Each new highest level pays
+  100 × the level in currency, and admins can attach a role to any level with
+  `/levels-admin reward-set`. `/rank` shows your level and progress, and `/leaderboard`
+  has a Levels board.
+- `/cash-in`: trade XP for currency, 1 XP for 1 coin. Your level drops, and levels
+  you've already been paid for don't pay again when you climb back.
+- `/levels-admin announce`: post level-ups where the member chatted, in a set channel,
+  or not at all.
+
+## 2026-11-26
+
+### Added
 - `/daily`: claim a reward once per UTC day. It starts at 200 and grows by 50 for each
   day in a row, up to 500 on a 7-day streak. Missing a day resets the streak.
 - Shop: `/shop` lists what's for sale, `/buy` buys it and `/inventory` shows what you

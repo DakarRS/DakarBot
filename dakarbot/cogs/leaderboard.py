@@ -1,5 +1,5 @@
-"""/leaderboard: richest members and longest active daily streaks, switchable with a
-dropdown that only the person who ran the command can use."""
+"""/leaderboard: richest members, highest levels and longest active daily streaks,
+switchable with a dropdown that only the person who ran the command can use."""
 from typing import Awaitable, Callable
 
 import discord
@@ -7,7 +7,8 @@ from discord.ext import commands
 
 from ..bot import DakarBot, DakarCog
 from ..economy.daily import utc_today
-from ..economy.leaderboard import Ranking, richest, streaks
+from ..economy.leaderboard import Ranking, levels, richest, streaks
+from ..leveling.curve import level_label
 from ..ui import LayoutView
 
 TIMEOUT_SECONDS = 120
@@ -71,7 +72,7 @@ class LeaderboardView(LayoutView):
 
 
 class LeaderboardCog(DakarCog, name="Leaderboard"):
-    @discord.slash_command(name="leaderboard", description="See who's richest and who has the longest daily streak.")
+    @discord.slash_command(name="leaderboard", description="See who's richest, highest level and on the longest daily streak.")
     @commands.guild_only()
     @commands.cooldown(1, 10, commands.BucketType.user)
     async def leaderboard(self, ctx: discord.ApplicationContext) -> None:
@@ -85,7 +86,10 @@ class LeaderboardCog(DakarCog, name="Leaderboard"):
             ranking = await streaks(self.db, guild_id, caller_id, utc_today())
             return render("Daily streaks", ranking, lambda v: f"{v} day{'s' if v != 1 else ''}", caller_id)
 
-        boards = {"Richest": richest_board, "Daily streaks": streak_board}
+        async def level_board() -> str:
+            return render("Levels", await levels(self.db, guild_id, caller_id), level_label, caller_id)
+
+        boards = {"Richest": richest_board, "Levels": level_board, "Daily streaks": streak_board}
         view = LeaderboardView(boards, await richest_board(), "Richest", caller_id)
         await ctx.respond(view=view, allowed_mentions=NO_MENTIONS)
         view.message = await ctx.interaction.original_response()

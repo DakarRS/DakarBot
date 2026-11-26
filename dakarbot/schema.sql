@@ -155,3 +155,21 @@ CREATE TABLE IF NOT EXISTS action_counts (
 );
 
 CREATE INDEX IF NOT EXISTS action_counts_to_id ON action_counts (to_id);
+
+-- max_level is the highest level ever reached, so cashing XP in and leveling back up
+-- doesn't pay out or grant rewards a second time.
+CREATE TABLE IF NOT EXISTS levels (
+    guild_id   BIGINT NOT NULL,
+    user_id    BIGINT NOT NULL,
+    xp         BIGINT NOT NULL CHECK (xp >= 0),
+    max_level  INT NOT NULL DEFAULT 0,
+    last_award BIGINT NOT NULL,
+    PRIMARY KEY (guild_id, user_id)
+);
+
+CREATE TABLE IF NOT EXISTS level_rewards (
+    guild_id BIGINT NOT NULL,
+    level    INT NOT NULL,
+    role_id  BIGINT NOT NULL,
+    PRIMARY KEY (guild_id, level)
+);

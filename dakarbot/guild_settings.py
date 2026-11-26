@@ -107,6 +107,15 @@ class GuildSettings:
         """None goes back to the default."""
         await self._set_field(guild_id, "currency_name", name)
 
+    # ---- leveling ----
+
+    async def get_level_up_target(self, guild_id: int) -> int | str | None:
+        """None posts where the member leveled up, "off" disables, an int is a channel id."""
+        return await self._get_field(guild_id, "level_up_target")
+
+    async def set_level_up_target(self, guild_id: int, target: int | str | None) -> None:
+        await self._set_field(guild_id, "level_up_target", target)
+
     # ---- muted role ----
 
     async def get_muted_role_id(self, guild_id: int) -> Optional[int]:
