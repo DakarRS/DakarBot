@@ -15,6 +15,7 @@ from .blacklist import Blacklist
 from .channel_settings import ChannelSettings
 from .db import Database
 from .error_reporting import DiscordLogHandler, ErrorReporter
+from .games.wagers import Wagers
 from .guild_settings import GuildSettings
 from .social.gifs import GifStore
 from .social.seed_gifs import SEED_GIFS
@@ -114,6 +115,9 @@ class DakarBot(commands.AutoShardedBot):
         gifs = GifStore(self.db)
         await gifs.seed_if_empty(SEED_GIFS)
         await gifs.repair_legacy_urls()
+        refunded = await Wagers(self.db).refund_all()
+        if refunded:
+            logger.info("Refunded %d bets from games cut short by the restart", refunded)
         self.http_session = aiohttp.ClientSession(headers={"User-Agent": "DakarBot (Discord bot)"})
         await super().start(token, reconnect=reconnect)
 

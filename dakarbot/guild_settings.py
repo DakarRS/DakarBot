@@ -116,6 +116,14 @@ class GuildSettings:
     async def set_level_up_target(self, guild_id: int, target: int | str | None) -> None:
         await self._set_field(guild_id, "level_up_target", target)
 
+    # ---- rob ----
+
+    async def get_rob_enabled(self, guild_id: int) -> bool:
+        return bool(await self._get_field(guild_id, "rob_enabled", False))
+
+    async def set_rob_enabled(self, guild_id: int, enabled: bool) -> None:
+        await self._set_field(guild_id, "rob_enabled", enabled)
+
     # ---- muted role ----
 
     async def get_muted_role_id(self, guild_id: int) -> Optional[int]:

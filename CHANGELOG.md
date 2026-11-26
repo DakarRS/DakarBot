@@ -9,6 +9,20 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## Unreleased
 
 ### Added
+- `/coinflip`: call heads or tails, and a correct call doubles your bet.
+- `/slots`: three reels. Three of a kind pays 5x to 100x, and two Cherries pay 1.5x.
+- `/blackjack`: Hit, Stand and Double buttons. The dealer stands on 17, and a natural
+  blackjack pays 3:2. If you walk away, you stand after 2 minutes.
+- `/rps @member <bet>`: rock paper scissors for a pot. Both bets are held until the
+  duel ends, and a decline, timeout or tie refunds them.
+- `/rob @member`: a 40% chance to steal 10-30% of someone's balance. If you're caught,
+  you pay them a fine. One try an hour. It's off until an admin turns it on with
+  `/currency rob`.
+- Bets in games that were cut short by a restart are refunded when the bot starts.
+
+## 2026-11-26
+
+### Added
 - Leveling: chatting earns 15-25 XP, at most once a minute. Each new highest level pays
   100 × the level in currency, and admins can attach a role to any level with
   `/levels-admin reward-set`. `/rank` shows your level and progress, and `/leaderboard`
@@ -17,10 +31,6 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   you've already been paid for don't pay again when you climb back.
 - `/levels-admin announce`: post level-ups where the member chatted, in a set channel,
   or not at all.
-
-## 2026-11-26
-
-### Added
 - `/daily`: claim a reward once per UTC day. It starts at 200 and grows by 50 for each
   day in a row, up to 500 on a 7-day streak. Missing a day resets the streak.
 - Shop: `/shop` lists what's for sale, `/buy` buys it and `/inventory` shows what you

@@ -1,6 +1,6 @@
-"""Per-server currency, ported from exorium: /balance, /balance-reset, /work, /daily, /pay and
-the admin /currency group. Discord won't let /balance be both a command and a group,
-which is why reset is /balance-reset rather than /balance reset."""
+"""Per-server currency, ported from exorium: /balance, /balance-reset, /work, /daily,
+/pay and the admin /currency group (which also holds the /rob toggle). Discord won't
+let /balance be both a command and a group, which is why reset is /balance-reset."""
 import random
 from typing import Optional
 
@@ -154,6 +154,15 @@ class CurrencyCog(DakarCog, name="Currency"):
         await ctx.respond(f"Set {member.mention}'s balance to **{amount:,}** {name}.",
                           allowed_mentions=discord.AllowedMentions.none())
         await self.log_change(ctx.guild, "Balance set", ctx.author, member, None, amount)
+
+    @currency.command(name="rob", description="Turn /rob on or off in this server.")
+    async def currency_rob(
+        self,
+        ctx: discord.ApplicationContext,
+        enabled: discord.Option(bool, description="Whether members can rob each other"),
+    ) -> None:
+        await self.guild_settings.set_rob_enabled(ctx.guild.id, enabled)
+        await ctx.respond("Members can now rob each other with /rob." if enabled else "/rob is now turned off.")
 
     @currency.command(name="name", description="Rename this server's currency.")
     async def currency_name(

@@ -173,3 +173,21 @@ CREATE TABLE IF NOT EXISTS level_rewards (
     role_id  BIGINT NOT NULL,
     PRIMARY KEY (guild_id, level)
 );
+
+-- Bets taken for games that wait on buttons (blackjack, rps). Anything still here on
+-- startup belonged to a game the restart killed, so it's refunded.
+CREATE TABLE IF NOT EXISTS held_bets (
+    id       SERIAL PRIMARY KEY,
+    guild_id BIGINT NOT NULL,
+    user_id  BIGINT NOT NULL,
+    amount   BIGINT NOT NULL CHECK (amount > 0),
+    game     VARCHAR(20) NOT NULL,
+    created  BIGINT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS rob_cooldowns (
+    guild_id     BIGINT NOT NULL,
+    user_id      BIGINT NOT NULL,
+    last_attempt BIGINT NOT NULL,
+    PRIMARY KEY (guild_id, user_id)
+);

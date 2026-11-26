@@ -1,9 +1,11 @@
-"""Helpers shared by the currency, shop, leveling and leaderboard cogs."""
+"""Helpers shared by the economy, game, leveling and leaderboard cogs."""
 import logging
 from typing import Optional
 
 import discord
 
+from ..economy.balances import MAX_BALANCE
+from ..games.wagers import MIN_BET
 from ..guild_settings import GuildSettings
 from ..ui import LayoutView
 
@@ -26,6 +28,10 @@ def role_problem(role: discord.Role, author: discord.Member) -> Optional[str]:
     if author != role.guild.owner and role >= author.top_role:
         return "You can only give out roles below your own highest role."
     return None
+
+
+def bet_option(description: str = "How much to bet") -> discord.Option:
+    return discord.Option(int, description=description, min_value=MIN_BET, max_value=MAX_BALANCE)
 
 
 def panel(text: str, color: discord.Color) -> LayoutView:
