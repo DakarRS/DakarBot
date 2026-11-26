@@ -8,7 +8,11 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## Unreleased
 
-Nothing yet.
+### Added
+- Translate: right-click any message and pick Apps > Translate to see it in your own
+  Discord language, privately. `/translate` translates typed text into a language you
+  choose (your own by default). Both work as user apps, so they also work in DMs and
+  servers the bot isn't in. Up to 1,500 characters at a time.
 
 ## 2026-11-26
 
